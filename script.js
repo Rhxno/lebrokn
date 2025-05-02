@@ -23,6 +23,13 @@ let pendingSwitch = null; // Track the pending switch action
 let maxTeamSize = 0; // Declare maxTeamSize globally
 let currentPlayerIndex = { 1: 0, 2: 0 }; // Track current player index for each team
 
+// At the top of your script, outside any function:
+let draggedItem = null;
+let originalParent = null;
+let originalNextSibling = null;
+let offsetX = 0;
+let offsetY = 0;
+
 // --- Speech Recognition Variables ---
 let recognition = null;
 let targetInput = null;
@@ -290,6 +297,102 @@ function allowDrop(event) {
     event.preventDefault();
 }
 
+// --- Touch Drag-and-Drop Handlers ---
+
+// offsetX/Y will store the distance from the element's top-left corner
+// to the initial touch point, calculated using PAGE coordinates.
+function handleTouchStart(event) {
+    if (gameStarted) return;
+    event.preventDefault();
+    console.log("Touch Start:", event.target.textContent);
+
+    draggedItem = event.target;
+    originalParent = draggedItem.parentNode;
+    originalNextSibling = draggedItem.nextSibling;
+
+    const touch = event.touches[0];
+    const rect = draggedItem.getBoundingClientRect();
+
+    // --- Calculate offset using PAGE coordinates ---
+    const scrollX = window.pageXOffset;
+    const scrollY = window.pageYOffset;
+    const elementPageX = rect.left + scrollX;
+    const elementPageY = rect.top + scrollY;
+    offsetX = touch.pageX - elementPageX;
+    offsetY = touch.pageY - elementPageY;
+    // --- End offset calculation ---
+
+    // Apply dragging styles and fixed positioning
+    draggedItem.classList.add('dragging');
+    draggedItem.style.position = 'fixed';
+    draggedItem.style.zIndex = '1000';
+    draggedItem.style.left = '';
+    draggedItem.style.top = '';
+    draggedItem.style.transform = '';
+
+    // --- Defer initial positioning ---
+    requestAnimationFrame(() => {
+        if (!draggedItem) return;
+        const initialX = touch.pageX - offsetX - window.pageXOffset;
+        const initialY = touch.pageY - offsetY - window.pageYOffset;
+        draggedItem.style.left = `${initialX}px`;
+        draggedItem.style.top = `${initialY}px`;
+        console.log("Initial Position Applied (RAF):", `left: ${initialX}px, top: ${initialY}px`);
+        console.log(`  Touch PageY: ${touch.pageY}, ScrollY: ${window.pageYOffset}, OffsetY (page-based): ${offsetY}`);
+    });
+}
+
+function handleTouchMove(event) {
+    if (!draggedItem || gameStarted) return;
+    event.preventDefault();
+
+    const touch = event.touches[0];
+    const x = touch.pageX - offsetX - window.pageXOffset;
+    const y = touch.pageY - offsetY - window.pageYOffset;
+
+    draggedItem.style.left = `${x}px`;
+    draggedItem.style.top = `${y}px`;
+
+    removeDropTargetHighlight();
+    draggedItem.style.visibility = 'hidden';
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    draggedItem.style.visibility = 'visible';
+
+    if (elementBelow) {
+        const dropTarget = elementBelow.closest('.players-list, .leader-slot, #available-players');
+        if (dropTarget && dropTarget !== originalParent) {
+            dropTarget.classList.add('drag-over');
+        }
+    }
+}
+
+function resetDraggedItem() {
+    // Restore position in original parent
+    if (draggedItem && originalParent) {
+        // Remove fixed positioning BEFORE re-inserting
+        draggedItem.style.position = '';
+        // *** Clear top/left instead of transform ***
+        draggedItem.style.left = '';
+        draggedItem.style.top = '';
+        draggedItem.style.zIndex = '';
+        // draggedItem.style.transform = ''; // Not using transform
+        draggedItem.classList.remove('dragging');
+
+        // Re-insert into original position
+        if (originalNextSibling && originalNextSibling.parentNode === originalParent) {
+            originalParent.insertBefore(draggedItem, originalNextSibling);
+        } else {
+            originalParent.appendChild(draggedItem);
+        }
+    }
+
+    // Clear state variables
+    draggedItem = null;
+    originalParent = null;
+    originalNextSibling = null;
+    removeDropTargetHighlight(); // Ensure highlight is cleared
+}
+
 function drag(event) {
     event.dataTransfer.setData("text/plain", event.target.textContent);
     console.log("Dragging player:", event.target.textContent);
@@ -346,26 +449,36 @@ function dropLeader(ev, teamNumber) {
     });
 }
 
-function showConfirmationDialog(message, onConfirm) {
+function showConfirmationDialog(message, onConfirmCallback, onCancelCallback = resetDraggedItem) {
     const dialog = document.getElementById('confirmation-dialog');
     const messageElement = document.getElementById('confirmation-message');
     messageElement.textContent = message;
     dialog.style.display = 'flex';
-    
+
     void dialog.offsetWidth;
-    
+
     dialog.classList.add('show');
-    pendingSwitch = onConfirm;
+    pendingSwitch = {
+        onConfirm: onConfirmCallback,
+        onCancel: onCancelCallback
+    };
 }
 
 function confirmSwitch(confirm) {
     const dialog = document.getElementById('confirmation-dialog');
     dialog.classList.remove('show');
-    
+
+    const actionToConfirm = pendingSwitch?.onConfirm;
+    const actionOnCancel = pendingSwitch?.onCancel;
+
     setTimeout(() => {
         dialog.style.display = 'none';
-        if (confirm && pendingSwitch) {
-            pendingSwitch();
+        if (confirm && actionToConfirm) {
+            actionToConfirm();
+        } else if (!confirm && actionOnCancel) {
+            actionOnCancel();
+        } else if (!confirm) {
+            resetDraggedItem();
         }
         pendingSwitch = null;
     }, 300);
@@ -373,132 +486,215 @@ function confirmSwitch(confirm) {
 
 function handleTeamDrop(event, teamNumber, isLeaderSlot) {
     event.preventDefault();
-    if (gameStarted) return;
+    if (gameStarted) return false;
 
-    const playerName = event.dataTransfer.getData("text/plain").trim();
+    const playerName = event.dataTransfer.getData("text/plain");
     if (!playerName) {
-        console.error("No player name found in drag data");
-        return;
+        console.error("No player name found in drag data during handleTeamDrop");
+        return false;
     }
 
     const team = `team${teamNumber}`;
-    
+
+    // --- Leader Slot Logic ---
     if (isLeaderSlot) {
         const existingLeader = teamNumber === 1 ? players.team1Leader : players.team2Leader;
-        const sourceTeam = getPlayerCurrentTeam(playerName);
-        
+
         if (existingLeader === playerName) {
             showErrorModal("Cannot switch a player with themselves!");
-            return;
+            return false;
         }
 
         if (existingLeader) {
             showConfirmationDialog(
                 `Switch positions between ${existingLeader} (Leader) and ${playerName}?`,
                 () => {
-                    const playerTeam = getPlayerCurrentTeam(playerName);
-                    
+                    const currentTeamOfPlayer = getPlayerCurrentTeam(playerName);
                     removePlayerFromAllGroups(playerName);
                     removePlayerFromAllGroups(existingLeader);
 
-                    if (teamNumber === 1) {
-                        players.team1Leader = playerName;
-                        if (playerTeam === 1) {
-                            players.team1.push(existingLeader);
-                        } else if (playerTeam === 2) {
-                            players.team2.push(existingLeader);
-                        } else {
-                            players.available.push(existingLeader);
-                        }
-                    } else {
-                        players.team2Leader = playerName;
-                        if (playerTeam === 1) {
-                            players.team1.push(existingLeader);
-                        } else if (playerTeam === 2) {
-                            players.team2.push(existingLeader);
-                        } else {
-                            players.available.push(existingLeader);
-                        }
-                    }
-                    
+                    if (teamNumber === 1) players.team1Leader = playerName;
+                    else players.team2Leader = playerName;
+
+                    if (currentTeamOfPlayer === 1) players.team1.push(existingLeader);
+                    else if (currentTeamOfPlayer === 2) players.team2.push(existingLeader);
+                    else players.available.push(existingLeader);
+
                     updateTeamPlayersDisplay();
                     updateAvailablePlayersDisplay();
+                },
+                () => {
+                    resetDraggedItem();
                 }
             );
+            return true;
         } else {
-            removePlayerFromAllGroups(playerName);
-            if (teamNumber === 1) {
-                players.team1Leader = playerName;
-            } else {
-                players.team2Leader = playerName;
+            if (players[team].length + (players[`team${teamNumber}Leader`] ? 0 : 1) > maxTeamSize) {
+                showErrorModal(`Team ${teamNumber} is already full (max ${maxTeamSize} players)!`);
+                return false;
             }
-            updateTeamPlayersDisplay();
-            updateAvailablePlayersDisplay();
+            showConfirmationDialog(
+                `Make ${playerName} the leader of Team ${teamNumber}?`,
+                () => {
+                    removePlayerFromAllGroups(playerName);
+                    if (teamNumber === 1) players.team1Leader = playerName;
+                    else players.team2Leader = playerName;
+                    updateTeamPlayersDisplay();
+                    updateAvailablePlayersDisplay();
+                },
+                () => {
+                    resetDraggedItem();
+                }
+            );
+            return true;
         }
     } else {
-        if (players[team].length >= maxTeamSize) {
+        if (players[team].length + (players[`team${teamNumber}Leader`] ? 1 : 0) >= maxTeamSize) {
             showErrorModal(`Team ${teamNumber} is already full (max ${maxTeamSize} players)!`);
-            return;
+            return false;
         }
 
         const sourceTeam = getPlayerCurrentTeam(playerName);
-        if (sourceTeam) {
+        const sourceIsAvailable = players.available.includes(playerName);
+
+        if (
+            (sourceTeam === teamNumber && !isLeaderSlot) ||
+            (sourceIsAvailable && event.target.closest('#available-players')) ||
+            (sourceTeam === 1 && players.team1Leader === playerName && isLeaderSlot && teamNumber === 1) ||
+            (sourceTeam === 2 && players.team2Leader === playerName && isLeaderSlot && teamNumber === 2)
+        ) {
+            return false;
+        }
+
+        if (sourceTeam !== null || sourceIsAvailable) {
             showConfirmationDialog(
                 `Move ${playerName} to Team ${teamNumber}?`,
-                () => movePlayerToTeam(playerName, teamNumber)
+                () => {
+                    removePlayerFromAllGroups(playerName);
+                    players[team].push(playerName);
+                    updateTeamPlayersDisplay();
+                    updateAvailablePlayersDisplay();
+                },
+                () => {
+                    resetDraggedItem();
+                }
             );
+            return true;
         } else {
-            movePlayerToTeam(playerName, teamNumber);
+            console.warn(`Player ${playerName} not found in any list during drop.`);
+            return false;
         }
     }
 }
 
-function movePlayerToTeam(playerName, teamNumber) {
-    const sourceTeam = getPlayerCurrentTeam(playerName);
-    
-    removePlayerFromAllGroups(playerName);
-    
-    players[`team${teamNumber}`].push(playerName);
-    
-    updateTeamPlayersDisplay();
-    updateAvailablePlayersDisplay();
-}
+// --- Touch Drag-and-Drop Handlers ---
 
-function removePlayerFromAllGroups(playerName) {
-    console.log("removePlayerFromAllGroups START - Player:", playerName);
-    
-    const availableIndex = players.available.indexOf(playerName);
-    if (availableIndex > -1) {
-        players.available.splice(availableIndex, 1);
-        console.log("Removed from available players:", playerName);
+function createPlayerElement(playerName, isLeader = false) {
+    const playerElement = document.createElement('div');
+    playerElement.className = isLeader ? 'player leader locked' : 'player';
+    playerElement.draggable = !isLeader;
+    playerElement.textContent = playerName;
+
+    if (!isLeader) {
+        playerElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+        playerElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+        playerElement.addEventListener('touchend', function(e) {
+            if (!draggedItem || gameStarted) return;
+            e.preventDefault();
+
+            removeDropTargetHighlight();
+
+            const touch = e.changedTouches[0];
+            const dropTargetElement = document.elementFromPoint(touch.clientX, touch.clientY);
+
+            let droppedInValidZone = false;
+            let requiresConfirmation = false;
+
+            if (dropTargetElement) {
+                const teamContainer = dropTargetElement.closest('.team');
+                const leaderSlot = dropTargetElement.closest('.leader-slot');
+                const playersList = dropTargetElement.closest('.players-list');
+                const availablePlayersContainer = dropTargetElement.closest('#available-players');
+
+                if ((leaderSlot || playersList) && !(playersList === originalParent || leaderSlot === originalParent)) {
+                    const targetTeamNumber = teamContainer
+                        ? parseInt(teamContainer.id.replace('team', ''))
+                        : (leaderSlot ? parseInt(leaderSlot.closest('.team').id.replace('team', '')) : null);
+
+                    if (targetTeamNumber) {
+                        droppedInValidZone = true;
+                        const simulatedEvent = {
+                            preventDefault: () => {},
+                            dataTransfer: {
+                                getData: (format) => (format === "text/plain" ? draggedItem.textContent : null)
+                            },
+                            target: dropTargetElement
+                        };
+                        requiresConfirmation = handleTeamDrop(simulatedEvent, targetTeamNumber, !!leaderSlot);
+                    }
+                } else if (availablePlayersContainer && originalParent !== availablePlayersContainer) {
+                    droppedInValidZone = true;
+                    const sourceTeam = getPlayerCurrentTeam(draggedItem.textContent);
+                    if (sourceTeam) {
+                        requiresConfirmation = true;
+                        showConfirmationDialog(
+                            `Move ${draggedItem.textContent} back to Available Players?`,
+                            () => {
+                                removePlayerFromAllGroups(draggedItem.textContent);
+                                players.available.push(draggedItem.textContent);
+                                updateTeamPlayersDisplay();
+                                updateAvailablePlayersDisplay();
+                            },
+                            () => {
+                                resetDraggedItem();
+                            }
+                        );
+                    } else {
+                        droppedInValidZone = false;
+                        requiresConfirmation = false;
+                    }
+                }
+            }
+
+            if (!droppedInValidZone || (droppedInValidZone && !requiresConfirmation)) {
+                resetDraggedItem();
+            }
+        }, { passive: false });
+
+        playerElement.addEventListener('dragstart', drag);
     }
 
-    ['team1', 'team2'].forEach(team => {
-        const teamIndex = players[team].indexOf(playerName);
-        if (teamIndex > -1) {
-            players[team].splice(teamIndex, 1);
-            console.log(`Removed from ${team}:`, playerName);
+    if (isLeader) {
+        playerElement.classList.add('locked');
+    }
+
+    return playerElement;
+}
+
+function resetDraggedItem() {
+    if (draggedItem && originalParent) {
+        if (originalNextSibling && originalNextSibling.parentNode === originalParent) {
+            originalParent.insertBefore(draggedItem, originalNextSibling);
+        } else {
+            originalParent.appendChild(draggedItem);
         }
-    });
-
-    if (players.team1Leader === playerName) {
-        players.team1Leader = null;
-        console.log("Removed from Team 1 Leader position:", playerName);
     }
-    if (players.team2Leader === playerName) {
-        players.team2Leader = null;
-        console.log("Removed from Team 2 Leader position:", playerName);
+    if (draggedItem) {
+        draggedItem.style.position = '';
+        draggedItem.style.left = '';
+        draggedItem.style.top = '';
+        draggedItem.style.zIndex = '';
+        draggedItem.style.transform = ''; // *** Clear the transform ***
+        draggedItem.classList.remove('dragging');
     }
-
-    console.log("removePlayerFromAllGroups END - Player:", playerName);
+    draggedItem = null;
+    originalParent = null;
+    originalNextSibling = null;
+    removeDropTargetHighlight();
 }
 
-function getPlayerCurrentTeam(playerName) {
-    if (players.team1Leader === playerName) return 1;
-    if (players.team2Leader === playerName) return 2;
-    if (players.team1.includes(playerName)) return 1;
-    if (players.team2.includes(playerName)) return 2;
-    return null;
+function removeDropTargetHighlight() {
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
 }
 
 // --- Game Logic ---
@@ -506,23 +702,48 @@ async function startGame() {
     console.log("Starting game...");
     console.log("Team 1:", players.team1);
     console.log("Team 2:", players.team2);
-    
+
     if (!players.team1Leader || !players.team2Leader) {
         showErrorModal('Each team needs a leader!');
         return;
     }
-    
+
     if (players.team1.length === 0 || players.team2.length === 0) {
         showErrorModal('Each team needs at least one player!');
         return;
     }
 
+    // Check if a word exists. If not, generate one.
+    if (!currentWord) {
+        console.log("No current word found, generating one for game start.");
+        await generateNewWord(); // Generate word only if needed
+        if (!currentWord) { // Check again in case generation failed
+            showErrorModal('Failed to generate a word to start the game.');
+            return;
+        }
+    } else {
+        console.log("Starting game with existing word:", currentWord);
+        // Ensure the existing word is displayed correctly (in case it was hidden)
+        const wordElement = document.getElementById('current-word');
+        const toggleButton = document.getElementById('toggle-word-btn');
+        if (wordElement) {
+            wordElement.textContent = currentWord;
+            wordElement.style.backgroundColor = 'transparent';
+            wordElement.style.color = 'var(--text-color-light)';
+            isWordVisible = true;
+            if (toggleButton) toggleButton.textContent = 'Hide Word';
+        }
+    }
+
     gameStarted = true;
 
-    document.querySelector('.word-controls button:first-child').disabled = true;
+    // Disable the 'Generate Word' button after start
+    const generateWordButton = document.querySelector('.word-controls button:first-child');
+    if (generateWordButton) {
+        generateWordButton.disabled = true;
+    }
 
     document.getElementById('start-btn').style.display = 'none';
-
     document.getElementById('referee-controls').style.display = 'block';
 
     currentTeam = 1;
@@ -530,23 +751,23 @@ async function startGame() {
     currentPlayerIndex = { 1: 0, 2: 0 };
     gameLog = [];
 
+    // Reset scores visually if you have score display elements
     document.querySelectorAll('.score span').forEach(span => span.textContent = '0');
-    
-    await generateNewWord();
-    
-    currentGuesser = players.team1[0];
-    
+
+    // Assign initial guesser (assuming team 1 starts)
+    currentGuesser = players.team1.length > 0 ? players.team1[0] : players.team1Leader;
+
     showTurnOverlay();
     highlightCurrentTeam();
     updateActiveTeamLog();
-    
+
+    // Hide setup sections, show game controls
     document.querySelector('.game-setup').style.display = 'none';
     document.querySelector('.setup-section').style.display = 'none';
     document.querySelector('.game-controls').style.display = 'block';
-    
     document.querySelector('.word-section').style.display = 'block';
-    
-    console.log("Game started successfully");
+
+    console.log("Game started successfully with word:", currentWord);
 }
 
 async function generateNewWord() {
@@ -831,20 +1052,31 @@ function selectPlayerCount(playerCount) {
 
 function selectRounds(rounds) {
     totalRounds = rounds;
+    // Update the round input field visually (optional)
+    const roundsInput = document.getElementById('rounds');
+    if (roundsInput) roundsInput.value = rounds;
+
     const roundScreen = document.getElementById('round-select-screen');
     const gameContainer = document.getElementById('game-container');
 
     roundScreen.style.opacity = '0';
     roundScreen.style.visibility = 'hidden';
+    roundScreen.style.display = 'none';
 
     setTimeout(() => {
         gameContainer.style.opacity = '1';
         gameContainer.style.visibility = 'visible';
         gameContainer.style.display = 'block';
-        
+
         document.querySelector('.game-setup').style.display = 'block';
         document.querySelector('.setup-section').style.display = 'block';
         document.querySelector('.game-controls').style.display = 'block';
+
+        // --- Generate the INITIAL word when this screen appears ---
+        if (!currentWord) {
+            generateNewWord();
+        }
+        // -----------------------------------------------------------
     }, 300);
 }
 
@@ -882,34 +1114,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('team1-word-log').closest('.team-log').style.display = 'block';
 
-    initializeTouchDragAndDrop();
-    
-    const observer = new MutationObserver(() => {
-        initializeTouchDragAndDrop();
-    });
-    
-    document.querySelectorAll('.players-list').forEach(list => {
-        observer.observe(list, { childList: true });
-    });
-
     initializeSpeechRecognition();
 });
 
 function updateAvailablePlayersDisplay() {
     const availablePlayersDiv = document.getElementById('available-players');
-    console.log("updateAvailablePlayersDisplay called. players.available:", players.available);
     availablePlayersDiv.innerHTML = '';
     players.available.forEach(playerName => {
-        console.log("Processing player name in updateAvailablePlayersDisplay:", playerName);
-        const playerElement = document.createElement('div');
-        playerElement.className = 'player';
-        playerElement.draggable = true;
-        playerElement.ondragstart = drag;
-        playerElement.textContent = playerName;
+        // Use createPlayerElement so touch handlers are attached!
+        const playerElement = createPlayerElement(playerName);
         availablePlayersDiv.appendChild(playerElement);
-        console.log("Appended player element for:", playerName);
     });
-    console.log("updateAvailablePlayersDisplay finished.");
 }
 
 function updateTeamPlayersDisplay() {
@@ -1037,399 +1252,44 @@ function selectPlayerCount(count) {
     difficultySelectScreen.classList.add('active');
 }
 
-function handleTeamDrop(event, teamNumber, isLeaderSlot) {
-    event.preventDefault();
-    if (gameStarted) return;
+// --- Add these function definitions back into script.js ---
 
-    const playerName = event.dataTransfer.getData("text/plain");
-    if (!playerName) {
-        console.error("No player name found in drag data");
-        return;
+function removePlayerFromAllGroups(playerName) {
+    console.log("Attempting to remove player:", playerName); // Added for debugging
+
+    // Remove from available list
+    const availableIndex = players.available.indexOf(playerName);
+    if (availableIndex > -1) {
+        players.available.splice(availableIndex, 1);
+        console.log(playerName, "removed from available.");
     }
 
-    const team = `team${teamNumber}`;
-    
-    if (isLeaderSlot) {
-        const existingLeader = teamNumber === 1 ? players.team1Leader : players.team2Leader;
-        
-        if (existingLeader === playerName) {
-            showErrorModal("Cannot switch a player with themselves!");
-            return;
+    // Remove from team lists
+    ['team1', 'team2'].forEach(team => {
+        const teamIndex = players[team].indexOf(playerName);
+        if (teamIndex > -1) {
+            players[team].splice(teamIndex, 1);
+            console.log(playerName, `removed from ${team}.`);
         }
+    });
 
-        if (existingLeader) {
-            showConfirmationDialog(
-                `Switch positions between ${existingLeader} (Leader) and ${playerName}?`,
-                () => {
-                    const currentTeam = getPlayerCurrentTeam(playerName);
-                    const playerIndex = currentTeam ? 
-                        players[`team${currentTeam}`].indexOf(playerName) : -1;
-
-                    removePlayerFromAllGroups(playerName);
-                    removePlayerFromAllGroups(existingLeader);
-
-                    if (teamNumber === 1) {
-                        players.team1Leader = playerName;
-                        if (currentTeam === 1) {
-                            players.team1.push(existingLeader);
-                        } else if (currentTeam === 2) {
-                            players.team2.push(existingLeader);
-                        } else {
-                            players.available.push(existingLeader);
-                        }
-                    } else {
-                        players.team2Leader = playerName;
-                        if (currentTeam === 1) {
-                            players.team1.push(existingLeader);
-                        } else if (currentTeam === 2) {
-                            players.team2.push(existingLeader);
-                        } else {
-                            players.available.push(existingLeader);
-                        }
-                    }
-
-                    updateTeamPlayersDisplay();
-                    updateAvailablePlayersDisplay();
-                }
-            );
-        } else {
-            removePlayerFromAllGroups(playerName);
-            if (teamNumber === 1) {
-                players.team1Leader = playerName;
-            } else {
-                players.team2Leader = playerName;
-            }
-            updateTeamPlayersDisplay();
-            updateAvailablePlayersDisplay();
-        }
-    } else {
-        if (players[team].length >= maxTeamSize) {
-            showErrorModal(`Team ${teamNumber} is already full (max ${maxTeamSize} players)!`);
-            return;
-        }
-
-        const sourceTeam = getPlayerCurrentTeam(playerName);
-        if (sourceTeam) {
-            showConfirmationDialog(
-                `Move ${playerName} to Team ${teamNumber}?`,
-                () => movePlayerToTeam(playerName, teamNumber)
-            );
-        } else {
-            movePlayerToTeam(playerName, teamNumber);
-        }
+    // Remove from leader positions
+    if (players.team1Leader === playerName) {
+        players.team1Leader = null;
+        console.log(playerName, "removed as Team 1 Leader.");
     }
-}
-
-function movePlayerToTeam(playerName, teamNumber) {
-    removePlayerFromAllGroups(playerName);
-    if (teamNumber === 1) {
-        players.team1.push(playerName);
-    } else {
-        players.team2.push(playerName);
+    if (players.team2Leader === playerName) {
+        players.team2Leader = null;
+        console.log(playerName, "removed as Team 2 Leader.");
     }
-    updateTeamPlayersDisplay();
-    updateAvailablePlayersDisplay();
 }
 
 function getPlayerCurrentTeam(playerName) {
-    if (players.team1.includes(playerName) || players.team1Leader === playerName) {
+    if (players.team1Leader === playerName || players.team1.includes(playerName)) {
         return 1;
     }
-    if (players.team2.includes(playerName) || players.team2Leader === playerName) {
+    if (players.team2Leader === playerName || players.team2.includes(playerName)) {
         return 2;
     }
-    return null;
-}
-
-function updateTeamPlayersDisplay() {
-    const team1PlayersContainer = document.getElementById('team1-players');
-    team1PlayersContainer.innerHTML = '';
-    players.team1.forEach(playerName => {
-        team1PlayersContainer.appendChild(createPlayerElement(playerName));
-    });
-
-    const team2PlayersContainer = document.getElementById('team2-players');
-    team2PlayersContainer.innerHTML = '';
-    players.team2.forEach(playerName => {
-        team2PlayersContainer.appendChild(createPlayerElement(playerName));
-    });
-
-    if (players.team1Leader) {
-        document.getElementById('team1-leader').innerHTML = createPlayerElement(players.team1Leader, true).outerHTML;
-    }
-    if (players.team2Leader) {
-        document.getElementById('team2-leader').innerHTML = createPlayerElement(players.team2Leader, true).outerHTML;
-    }
-}
-
-function createPlayerElement(playerName, isLeader = false) {
-    const playerElement = document.createElement('div');
-    playerElement.className = isLeader ? 'player leader locked' : 'player';
-    playerElement.draggable = !isLeader;
-    
-    if (!isLeader) {
-        playerElement.addEventListener('touchstart', handleTouchStart, { passive: false });
-        playerElement.addEventListener('touchmove', handleTouchMove, { passive: false });
-        playerElement.addEventListener('touchend', handleTouchEnd, { passive: false });
-        
-        playerElement.ondragstart = (event) => {
-            event.dataTransfer.setData("text/plain", playerName);
-            console.log("Dragging player:", playerName);
-        };
-    }
-    
-    playerElement.textContent = playerName;
-    return playerElement;
-}
-
-function handleTouchStart(e) {
-    if (e.cancelable) e.preventDefault();
-    this.classList.add('dragging');
-}
-
-function handleTouchMove(e) {
-    if (e.cancelable) e.preventDefault();
-}
-
-function handleTouchEnd(e) {
-    if (e.cancelable) e.preventDefault();
-    this.classList.remove('dragging');
-}
-
-function initializeTouchDragAndDrop() {
-    let draggedItem = null;
-    let touchStartX = 0;
-    let touchStartY = 0;
-
-    document.querySelectorAll('.player').forEach(player => {
-        if (player.classList.contains('locked')) return;
-
-        player.addEventListener('touchstart', function(e) {
-            if (gameStarted || this.classList.contains('locked')) return;
-            e.preventDefault();
-            draggedItem = this;
-            const touch = e.touches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
-            this.classList.add('dragging');
-        }, { passive: false });
-
-        player.addEventListener('touchmove', function(e) {
-            if (!draggedItem || gameStarted) return;
-            e.preventDefault();
-            
-            const touch = e.touches[0];
-            const moveX = touch.clientX - touchStartX;
-            const moveY = touch.clientY - touchStartY;
-            
-            draggedItem.style.transform = `translate(${moveX}px, ${moveY}px)`;
-        }, { passive: false });
-
-        player.addEventListener('touchend', function(e) {
-            if (!draggedItem || gameStarted) return;
-            e.preventDefault();
-            
-            const touch = e.changedTouches[0];
-            const target = document.elementFromPoint(touch.clientX, touch.clientY);
-            const teamContainer = target.closest('.team');
-            const isLeaderSlot = target.closest('.leader-slot');
-            
-            if (teamContainer) {
-                const teamNumber = teamContainer.id.replace('team', '');
-                handleTeamDrop({
-                    preventDefault: () => {},
-                    dataTransfer: {
-                        getData: () => draggedItem.textContent
-                    }
-                }, parseInt(teamNumber), !!isLeaderSlot);
-            }
-            
-            draggedItem.style.transform = '';
-            draggedItem.classList.remove('dragging');
-            draggedItem = null;
-        }, { passive: false });
-    });
-
-    document.querySelectorAll('.players-list, .leader-slot').forEach(container => {
-        container.addEventListener('touchmove', e => {
-            if (draggedItem) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-    });
-}
-
-function removePlayerFromAvailable(playerName) {
-    const index = players.available.indexOf(playerName);
-    if (index > -1) {
-        players.available.splice(index, 1);
-        updateAvailablePlayersDisplay();
-    }
-}
-
-function initializeTouchDragAndDrop() {
-    let draggedItem = null;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let initialPosition = null;
-
-    document.querySelectorAll('.player').forEach(player => {
-        if (player.classList.contains('locked')) return;
-
-        player.addEventListener('touchstart', function(e) {
-            if (gameStarted) return;
-            e.preventDefault();
-            draggedItem = this;
-            const touch = e.touches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
-            
-            const rect = draggedItem.getBoundingClientRect();
-            initialPosition = {
-                left: rect.left,
-                top: rect.top
-            };
-            
-            this.classList.add('dragging');
-        }, { passive: false });
-
-        player.addEventListener('touchmove', function(e) {
-            if (!draggedItem || gameStarted) return;
-            e.preventDefault();
-            
-            const touch = e.touches[0];
-            const moveX = touch.clientX - touchStartX;
-            const moveY = touch.clientY - touchStartY;
-            
-            draggedItem.style.position = 'fixed';
-            draggedItem.style.left = `${initialPosition.left + moveX}px`;
-            draggedItem.style.top = `${initialPosition.top + moveY}px`;
-            draggedItem.style.zIndex = '1000';
-            
-            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-            removeDropTargetHighlight();
-            if (dropTarget) {
-                const teamContainer = dropTarget.closest('.team');
-                const leaderSlot = dropTarget.closest('.leader-slot');
-                if (teamContainer || leaderSlot) {
-                    (leaderSlot || teamContainer).classList.add('drag-over');
-                }
-            }
-        }, { passive: false });
-
-        player.addEventListener('touchend', function(e) {
-            if (!draggedItem || gameStarted) return;
-            e.preventDefault();
-            
-            const touch = e.changedTouches[0];
-            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-            
-            if (dropTarget) {
-                const teamContainer = dropTarget.closest('.team');
-                const leaderSlot = dropTarget.closest('.leader-slot');
-                
-                if (teamContainer || leaderSlot) {
-                    const teamNumber = teamContainer ? 
-                        parseInt(teamContainer.id.replace('team', '')) : 
-                        parseInt(leaderSlot.closest('.team').id.replace('team', ''));
-                    
-                    handleTeamDrop({
-                        preventDefault: () => {},
-                        dataTransfer: {
-                            getData: () => draggedItem.textContent.trim()
-                        }
-                    }, teamNumber, !!leaderSlot);
-                }
-            }
-            
-            draggedItem.style.position = '';
-            draggedItem.style.left = '';
-            draggedItem.style.top = '';
-            draggedItem.style.zIndex = '';
-            draggedItem.classList.remove('dragging');
-            removeDropTargetHighlight();
-            draggedItem = null;
-        }, { passive: false });
-    });
-}
-
-function removeDropTargetHighlight() {
-    document.querySelectorAll('.drag-over').forEach(element => {
-        element.classList.remove('drag-over');
-    });
-}
-
-function handleTeamDrop(event, teamNumber, isLeaderSlot) {
-    event.preventDefault();
-    if (gameStarted) return;
-
-    const playerName = event.dataTransfer.getData("text/plain").trim();
-    if (!playerName) {
-        console.error("No player name found in drag data");
-        return;
-    }
-
-    const sourceTeam = getPlayerCurrentTeam(playerName);
-    if ((players.team1Leader === playerName || players.team2Leader === playerName) && !isLeaderSlot) {
-        showErrorModal("Team leaders cannot be moved to regular player slots!");
-        return;
-    }
-
-    const team = `team${teamNumber}`;
-    
-    if (isLeaderSlot) {
-        const existingLeader = teamNumber === 1 ? players.team1Leader : players.team2Leader;
-        
-        if (existingLeader === playerName) {
-            showErrorModal("Cannot switch a player with themselves!");
-            return;
-        }
-
-        if (existingLeader) {
-            showConfirmationDialog(
-                `Switch positions between ${existingLeader} (Leader) and ${playerName}?`,
-                () => {
-                    const currentTeam = getPlayerCurrentTeam(playerName);
-                    
-                    removePlayerFromAllGroups(playerName);
-                    removePlayerFromAllGroups(existingLeader);
-
-                    if (teamNumber === 1) {
-                        players.team1Leader = playerName;
-                        if (currentTeam) {
-                            players[`team${currentTeam}`].push(existingLeader);
-                        } else {
-                            players.available.push(existingLeader);
-                        }
-                    } else {
-                        players.team2Leader = playerName;
-                        if (currentTeam) {
-                            players[`team${currentTeam}`].push(existingLeader);
-                        } else {
-                            players.available.push(existingLeader);
-                        }
-                    }
-
-                    updateTeamPlayersDisplay();
-                    updateAvailablePlayersDisplay();
-                }
-            );
-        } else {
-            removePlayerFromAllGroups(playerName);
-            if (teamNumber === 1) {
-                players.team1Leader = playerName;
-            } else {
-                players.team2Leader = playerName;
-            }
-            updateTeamPlayersDisplay();
-            updateAvailablePlayersDisplay();
-        }
-    } else {
-        if (players[team].length >= maxTeamSize) {
-            showErrorModal(`Team ${teamNumber} is already full (max ${maxTeamSize} players)!`);
-            return;
-        }
-
-        movePlayerToTeam(playerName, teamNumber);
-    }
+    return null; // Return null if player is not assigned to a team
 }
