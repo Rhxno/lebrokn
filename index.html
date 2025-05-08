@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CyberPass - Password Game</title>
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
+    <title>Password - Word Party Game</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -11,12 +11,13 @@
     <div class="container">
         <section class="player-select-screen card" id="player-select-screen">
             <h2>Choose Number of Players</h2>
-            <div class="player-slots">
-                <button class="btn primary-btn player-slot-btn" onclick="selectPlayerCount(4)">4 Players</button>
-                <button class="btn primary-btn player-slot-btn" onclick="selectPlayerCount(5)">5 Players</button>
-                <button class="btn primary-btn player-slot-btn" onclick="selectPlayerCount(6)">6 Players</button>
-                <button class="btn primary-btn player-slot-btn" onclick="selectPlayerCount(7)">7 Players</button>
+            <div class="player-slider-container">
+                <input type="range" min="2" max="10" value="2" class="player-slider" id="player-slider-input" step="1">
+                <div class="slider-value-container">
+                    Players: [<span id="slider-value">2</span>]
+                </div>
             </div>
+            <button class="btn primary-btn" id="confirm-player-count-btn" style="margin-top: 20px;">Confirm Players</button>
         </section>
 
         <section class="difficulty-select-screen card" id="difficulty-select-screen">
@@ -42,7 +43,7 @@
 
         <div id="game-container" style="display: none;">
             <header class="navbar">
-                <div class="logo">CyberPass</div>
+                <div class="logo">Password</div>
             </header>
 
             <main>
