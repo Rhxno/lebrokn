@@ -246,15 +246,84 @@ body {
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* Subtle text shadow */
 }
 
-.player-slots {
-    display: flex;
-    gap: 2rem;
+/* Remove or modify existing styles for .player-slots and .player-slot-btn if they are no longer needed or conflict */
+.player-slots,
+.player-slot-btn {
+    display: none !important;
 }
 
-.player-slot-btn {
-    padding: 1.2rem 2.5rem;
-    font-size: 1.2rem;
-    letter-spacing: 1px;
+/* Player Slider Styles */
+.player-slider-container {
+    display: flex;
+    flex-direction: column; /* Stack slider and value display vertically */
+    align-items: center; /* Center items horizontally */
+    width: 80%; /* Adjust width as needed */
+    max-width: 350px; /* Maximum width */
+    margin: 20px auto; /* Center the container */
+}
+
+.player-slider {
+    -webkit-appearance: none; /* Override default appearance for WebKit/Blink */
+    appearance: none;
+    width: 100%; /* Full width of its container */
+    height: 8px; /* Height of the track (the "fine line") */
+    background: var(--card-border, #4fc3f7); /* Track color, fallback to a light blue */
+    border-radius: 5px; /* Rounded edges for the track */
+    outline: none; /* Remove default outline */
+    opacity: 0.9;
+    transition: opacity .2s;
+    cursor: pointer;
+}
+
+.player-slider:hover {
+    opacity: 1; /* Full opacity on hover */
+}
+
+/* Thumb (the draggable "dot") Styles for WebKit/Blink browsers (Chrome, Safari, Edge, Opera) */
+.player-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default appearance */
+    appearance: none;
+    width: 24px; /* Width of the thumb */
+    height: 24px; /* Height of the thumb */
+    background: var(--primary, #00eeff); /* Thumb color */
+    border-radius: 50%; /* Make it a circle */
+    border: 2px solid var(--dark, #070b18); /* Optional border for the thumb */
+    cursor: pointer;
+    margin-top: -8px; /* Adjust vertical position to center on the track. (thumb height - track height) / 2 */
+                               /* (24px - 8px) / 2 = 8px. Negative because it's margin-top. */
+}
+
+/* Thumb Styles for Firefox */
+.player-slider::-moz-range-thumb {
+    width: 24px; /* Width of the thumb */
+    height: 24px; /* Height of the thumb */
+    background: var(--primary, #00eeff); /* Thumb color */
+    border-radius: 50%; /* Make it a circle */
+    border: 2px solid var(--dark, #070b18); /* Optional border for the thumb */
+    cursor: pointer;
+    border: none; /* Firefox might add its own border, remove it if needed */
+}
+
+.slider-value-container {
+    margin-top: 15px; /* Space between slider and value display */
+    font-size: 1.3rem; /* Slightly larger font size */
+    color: var(--text-color-light, #e0f7ff);
+    font-weight: 500;
+}
+
+#slider-value {
+    font-weight: 700;
+    color: var(--primary, #00eeff);
+    padding: 0 2px; /* Add a little padding inside the brackets if needed */
+}
+
+/* Styles for the confirm button, similar to your other buttons */
+#confirm-player-count-btn {
+    /* Uses .btn and .primary-btn styles by default */
+    /* Add any specific overrides if needed */
+    margin-top: 30px; /* More space above the button */
+    padding: 1rem 2.5rem; /* Adjust padding */
+    font-size: 1.1rem;
 }
 
 /* Difficulty Select Screen Styles - Reusing styles from player select screen */
