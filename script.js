@@ -1097,6 +1097,45 @@ function selectDifficulty(difficulty) {
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
+    const playerSlider = document.getElementById('player-slider-input');
+    const sliderValueDisplay = document.getElementById('slider-value');
+    const confirmPlayerCountBtn = document.getElementById('confirm-player-count-btn');
+    const playerSelectScreen = document.getElementById('player-select-screen');
+
+    if (playerSlider && sliderValueDisplay) {
+        // Set initial display value from the slider's current value
+        sliderValueDisplay.textContent = playerSlider.value; // ADD THIS LINE
+
+        // Update display when slider value changes
+        playerSlider.addEventListener('input', () => {
+            sliderValueDisplay.textContent = playerSlider.value;
+        });
+    }
+
+    if (confirmPlayerCountBtn && playerSelectScreen && playerSlider) {
+        confirmPlayerCountBtn.addEventListener('click', () => {
+            numberOfPlayers = parseInt(playerSlider.value);
+            maxTeamSize = Math.ceil(numberOfPlayers / 2); // <-- ADD THIS LINE
+            teamsConfig.team1.maxPlayers = maxTeamSize;
+            teamsConfig.team2.maxPlayers = maxTeamSize;
+            console.log("Number of players confirmed:", numberOfPlayers);
+
+            // Fade out player select screen
+            playerSelectScreen.classList.add('fade-out');
+
+            // After fade out, hide it and show difficulty select screen
+            setTimeout(() => {
+                playerSelectScreen.style.display = 'none'; // Or use visibility: hidden;
+                showDifficultySelectScreen(); // Ensure this function correctly shows the next screen
+            }, 500); // Match CSS transition duration (0.5s)
+        });
+    }
+
+    const difficultySelectScreen = document.getElementById('difficulty-select-screen');
+    if (difficultySelectScreen) {
+        // Initially hide it if it's not the first screen.
+    }
+
     document.getElementById('player-select-screen').style.opacity = '1';
     document.getElementById('player-select-screen').style.visibility = 'visible';
     document.getElementById('difficulty-select-screen').classList.remove('active');
@@ -1116,6 +1155,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeSpeechRecognition();
 });
+
+function showDifficultySelectScreen() {
+    const difficultySelectScreen = document.getElementById('difficulty-select-screen');
+    const playerSelectScreen = document.getElementById('player-select-screen'); // Get player select screen
+
+    if (playerSelectScreen) {
+        playerSelectScreen.classList.remove('active'); // Ensure player select screen is no longer active
+        playerSelectScreen.classList.add('fade-out'); // Ensure it fades out
+        setTimeout(() => {
+            playerSelectScreen.style.display = 'none';
+        }, 500);
+    }
+
+    if (difficultySelectScreen) {
+        difficultySelectScreen.classList.remove('fade-out'); // Reset fade-out
+        difficultySelectScreen.style.display = 'flex'; // Set display to flex or block as needed
+        difficultySelectScreen.classList.add('active'); // Add active class to trigger fade-in or display
+        console.log("Difficulty screen should now be active.");
+    } else {
+        console.error("Difficulty select screen not found");
+    }
+}
 
 function updateAvailablePlayersDisplay() {
     const availablePlayersDiv = document.getElementById('available-players');
