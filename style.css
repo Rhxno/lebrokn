@@ -47,6 +47,7 @@ body {
        Usually, you let body flow naturally or set min-height: 100vh and manage alignment inside .container.
        If .container is not always 100vh, these body styles might be okay.
     */
+    touch-action: manipulation; /* Helps prevent double-tap zoom on elements within body */
 }
 
 *, *::before, *::after {
