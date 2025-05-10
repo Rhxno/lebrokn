@@ -1120,14 +1120,15 @@ document.addEventListener('DOMContentLoaded', () => {
             teamsConfig.team2.maxPlayers = maxTeamSize;
             console.log("Number of players confirmed:", numberOfPlayers);
 
-            // Fade out player select screen
-            playerSelectScreen.classList.add('fade-out');
+            // Example modification in your script.js
+            // Inside confirmPlayerCountBtn click listener:
+            playerSelectScreen.classList.remove('active'); // Hide current
 
-            // After fade out, hide it and show difficulty select screen
-            setTimeout(() => {
-                playerSelectScreen.style.display = 'none'; // Or use visibility: hidden;
-                showDifficultySelectScreen(); // Ensure this function correctly shows the next screen
-            }, 500); // Match CSS transition duration (0.5s)
+            // Show next screen
+            const difficultySelectScreen = document.getElementById('difficulty-select-screen');
+            if (difficultySelectScreen) {
+                difficultySelectScreen.classList.add('active');
+            }
         });
     }
 
@@ -1157,21 +1158,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function showDifficultySelectScreen() {
+    const playerSelectScreen = document.getElementById('player-select-screen');
     const difficultySelectScreen = document.getElementById('difficulty-select-screen');
-    const playerSelectScreen = document.getElementById('player-select-screen'); // Get player select screen
 
     if (playerSelectScreen) {
-        playerSelectScreen.classList.remove('active'); // Ensure player select screen is no longer active
-        playerSelectScreen.classList.add('fade-out'); // Ensure it fades out
-        setTimeout(() => {
-            playerSelectScreen.style.display = 'none';
-        }, 500);
+        playerSelectScreen.classList.remove('active');
     }
-
     if (difficultySelectScreen) {
-        difficultySelectScreen.classList.remove('fade-out'); // Reset fade-out
-        difficultySelectScreen.style.display = 'flex'; // Set display to flex or block as needed
-        difficultySelectScreen.classList.add('active'); // Add active class to trigger fade-in or display
+        difficultySelectScreen.classList.add('active');
         console.log("Difficulty screen should now be active.");
     } else {
         console.error("Difficulty select screen not found");
