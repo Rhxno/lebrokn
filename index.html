@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="A fun and interactive word party game.">
     <title>Password - Word Party Game</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -13,7 +15,7 @@
             <div class="card-content">
                 <h2>Choose Number of Players</h2>
                 <div class="player-slider-container">
-                    <input type="range" min="2" max="10" value="2" class="player-slider" id="player-slider-input" step="1">
+                    <input type="range" min="2" max="10" value="2" class="player-slider" id="player-slider-input" step="1" aria-label="Select number of players">
                     <div class="slider-value-container">
                         Players: [<span id="slider-value">2</span>]
                     </div>
@@ -26,9 +28,9 @@
             <div class="card-content">
                 <h2>Choose Difficulty</h2>
                 <div class="difficulty-slots">
-                    <button class="btn primary-btn difficulty-slot-btn" onclick="selectDifficulty('easy')">Easy</button>
-                    <button class="btn primary-btn difficulty-slot-btn" onclick="selectDifficulty('medium')">Medium</button>
-                    <button class="btn primary-btn difficulty-slot-btn" onclick="selectDifficulty('hard')">Hard</button>
+                    <button class="btn primary-btn difficulty-slot-btn" onclick="selectDifficulty('easy')" aria-label="Select Easy Difficulty">Easy</button>
+                    <button class="btn primary-btn difficulty-slot-btn" onclick="selectDifficulty('medium')" aria-label="Select Medium Difficulty">Medium</button>
+                    <button class="btn primary-btn difficulty-slot-btn" onclick="selectDifficulty('hard')" aria-label="Select Hard Difficulty">Hard</button>
                 </div>
             </div>
         </section>
@@ -37,10 +39,10 @@
             <div class="card-content">
                 <h2>Choose Number of Rounds</h2>
                 <div class="options-grid">
-                    <button class="btn primary-btn round-slot-btn" onclick="selectRounds(3)">3 Rounds</button>
-                    <button class="btn primary-btn round-slot-btn" onclick="selectRounds(5)">5 Rounds</button>
-                    <button class="btn primary-btn round-slot-btn" onclick="selectRounds(7)">7 Rounds</button>
-                    <button class="btn primary-btn round-slot-btn" onclick="selectRounds(10)">10 Rounds</button>
+                    <button class="btn primary-btn round-slot-btn" onclick="selectRounds(3)" aria-label="Select 3 Rounds">3 Rounds</button>
+                    <button class="btn primary-btn round-slot-btn" onclick="selectRounds(5)" aria-label="Select 5 Rounds">5 Rounds</button>
+                    <button class="btn primary-btn round-slot-btn" onclick="selectRounds(7)" aria-label="Select 7 Rounds">7 Rounds</button>
+                    <button class="btn primary-btn round-slot-btn" onclick="selectRounds(10)" aria-label="Select 10 Rounds">10 Rounds</button>
                 </div>
             </div>
         </div>
