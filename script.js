@@ -7,7 +7,7 @@ class SpaceBackgroundSystem {
         this.performanceMode = this.detectPerformanceMode();
         this.animationFrameId = null;
         this.lastFrameTime = 0;
-        this.targetFPS = 60;
+        this.targetFPS = 30; // Reduced from 60 to 30 for better performance
         this.frameInterval = 1000 / this.targetFPS;
     }
 
@@ -72,10 +72,11 @@ class SpaceBackgroundSystem {
     }
 
     applyMobileOptimizations() {
-        // Reduce animation complexity on mobile
+        // Reduce animation complexity on mobile and optimize for 30 FPS
         const starsLayers = document.querySelectorAll('.stars-layer-2, .stars-layer-3');
         starsLayers.forEach(layer => {
             layer.style.opacity = '0.3';
+            layer.style.animationDuration = '240s'; // Slower animations for less CPU usage
         });
 
         // Hide complex elements on very low-end devices
@@ -168,13 +169,20 @@ class SpaceBackgroundSystem {
         let highFPSCount = 0;
 
         const monitorFrame = (currentTime) => {
+            // Frame rate limiting to 30 FPS
+            if (currentTime - this.lastFrameTime < this.frameInterval) {
+                this.animationFrameId = requestAnimationFrame(monitorFrame);
+                return;
+            }
+            this.lastFrameTime = currentTime;
+
             frameCount++;
 
             if (currentTime - lastTime >= 1000) {
                 const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
 
-                // Dynamic performance optimization based on FPS
-                if (fps < 30) {
+                // Dynamic performance optimization based on FPS (adjusted for 30 FPS target)
+                if (fps < 20) {
                     lowFPSCount++;
                     highFPSCount = 0;
                     if (lowFPSCount >= 3 && !this.performanceMode.shouldOptimize) {
@@ -183,7 +191,7 @@ class SpaceBackgroundSystem {
                         this.performanceMode.shouldOptimize = true;
                         this.optimizeForLowPerformance();
                     }
-                } else if (fps >= 50) {
+                } else if (fps >= 35) {
                     highFPSCount++;
                     lowFPSCount = 0;
                     // If performance is consistently good, we can enable more effects
@@ -197,7 +205,7 @@ class SpaceBackgroundSystem {
 
                 // Log performance metrics in development
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    console.log(`Space Background FPS: ${fps}`);
+                    console.log(`Space Background FPS: ${fps} (Target: ${this.targetFPS})`);
                 }
 
                 frameCount = 0;
@@ -260,14 +268,14 @@ class SpaceBackgroundSystem {
             element.style.willChange = 'auto';
         });
 
-        // Reduce animation complexity
+        // Reduce animation complexity for 30 FPS target
         const remainingElements = document.querySelectorAll('.stars-layer-2, .stars-layer-3');
         remainingElements.forEach(element => {
             element.style.opacity = '0.2';
-            element.style.animationDuration = '120s'; // Slower animations
+            element.style.animationDuration = '180s'; // Even slower animations for 30 FPS
         });
 
-        console.log('Low performance optimizations applied');
+        // Low performance optimizations applied
     }
 
     // Batch DOM updates for better performance
@@ -298,6 +306,403 @@ class SpaceBackgroundSystem {
 
 // Initialize space background system
 const spaceBackground = new SpaceBackgroundSystem();
+
+// Initialize the space background when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    spaceBackground.init();
+});
+
+// ===== DESKTOP COMPATIBILITY ENHANCEMENTS =====
+
+class DesktopEnhancementManager {
+    constructor() {
+        this.isDesktop = window.innerWidth >= 1024;
+        this.init();
+    }
+
+    init() {
+        if (this.isDesktop) {
+            this.setupDesktopFeatures();
+            this.setupKeyboardNavigation();
+            this.setupDesktopDragAndDrop();
+            this.setupContextMenus();
+            this.setupDesktopAnimations();
+        }
+
+        // Listen for resize events to toggle desktop features
+        window.addEventListener('resize', () => {
+            const wasDesktop = this.isDesktop;
+            this.isDesktop = window.innerWidth >= 1024;
+
+            if (wasDesktop !== this.isDesktop) {
+                if (this.isDesktop) {
+                    this.enableDesktopFeatures();
+                } else {
+                    this.disableDesktopFeatures();
+                }
+            }
+        });
+    }
+
+    setupDesktopFeatures() {
+        // Add desktop-specific classes
+        document.body.classList.add('desktop-mode');
+
+        // Enhanced hover effects for buttons
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', this.handleButtonHover);
+            btn.addEventListener('mouseleave', this.handleButtonLeave);
+        });
+
+        // Enhanced card interactions
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', this.handleCardHover);
+            card.addEventListener('mouseleave', this.handleCardLeave);
+        });
+
+        // Desktop-specific input enhancements
+        this.setupDesktopInputs();
+    }
+
+    setupDesktopInputs() {
+        const inputs = document.querySelectorAll('input[type="text"], input[type="number"], textarea');
+
+        inputs.forEach(input => {
+            // Add desktop-specific input behaviors
+            input.addEventListener('focus', (e) => {
+                e.target.parentElement?.classList.add('input-focused');
+            });
+
+            input.addEventListener('blur', (e) => {
+                e.target.parentElement?.classList.remove('input-focused');
+            });
+
+            // Add keyboard shortcuts for common actions
+            input.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    switch (e.key) {
+                        case 'Enter':
+                            // Submit form or trigger primary action
+                            const submitBtn = input.closest('form')?.querySelector('.primary-btn') ||
+                                input.closest('.card')?.querySelector('.primary-btn');
+                            if (submitBtn) {
+                                e.preventDefault();
+                                submitBtn.click();
+                            }
+                            break;
+                    }
+                }
+            });
+        });
+    }
+
+    setupKeyboardNavigation() {
+        // Global keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Escape key to close modals/overlays
+            if (e.key === 'Escape') {
+                const activeOverlay = document.querySelector('.full-screen-overlay.active');
+                if (activeOverlay) {
+                    this.closeActiveOverlay();
+                }
+
+                const activeModal = document.querySelector('.modal[style*="block"]');
+                if (activeModal) {
+                    closeErrorModal();
+                }
+            }
+
+            // Space bar for primary actions
+            if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                const primaryBtn = document.querySelector('.btn.primary-btn:not([disabled])');
+                if (primaryBtn && primaryBtn.offsetParent !== null) {
+                    e.preventDefault();
+                    primaryBtn.click();
+                }
+            }
+
+            // Arrow keys for navigation
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                this.handleArrowKeyNavigation(e);
+            }
+        });
+
+        // Tab navigation improvements
+        this.setupTabNavigation();
+    }
+
+    setupTabNavigation() {
+        const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                const focusable = Array.from(document.querySelectorAll(focusableElements))
+                    .filter(el => el.offsetParent !== null && !el.disabled);
+
+                const currentIndex = focusable.indexOf(document.activeElement);
+
+                if (e.shiftKey) {
+                    // Shift+Tab (previous)
+                    if (currentIndex <= 0) {
+                        e.preventDefault();
+                        focusable[focusable.length - 1].focus();
+                    }
+                } else {
+                    // Tab (next)
+                    if (currentIndex >= focusable.length - 1) {
+                        e.preventDefault();
+                        focusable[0].focus();
+                    }
+                }
+            }
+        });
+    }
+
+    setupDesktopDragAndDrop() {
+        const players = document.querySelectorAll('.player[draggable="true"]');
+
+        players.forEach(player => {
+            // Enhanced desktop drag and drop
+            player.addEventListener('dragstart', (e) => {
+                player.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', player.outerHTML);
+
+                // Create custom drag image
+                const dragImage = player.cloneNode(true);
+                dragImage.style.transform = 'rotate(5deg) scale(1.1)';
+                dragImage.style.opacity = '0.8';
+                document.body.appendChild(dragImage);
+                e.dataTransfer.setDragImage(dragImage, 50, 25);
+                setTimeout(() => document.body.removeChild(dragImage), 0);
+            });
+
+            player.addEventListener('dragend', (e) => {
+                player.classList.remove('dragging');
+            });
+
+            // Mouse hover effects
+            player.addEventListener('mouseenter', (e) => {
+                if (!player.classList.contains('dragging')) {
+                    player.style.transform = 'translateY(-3px) scale(1.05)';
+                }
+            });
+
+            player.addEventListener('mouseleave', (e) => {
+                if (!player.classList.contains('dragging')) {
+                    player.style.transform = '';
+                }
+            });
+        });
+
+        // Enhanced drop zones
+        const dropZones = document.querySelectorAll('.team, #available-players');
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+
+            zone.addEventListener('dragleave', (e) => {
+                if (!zone.contains(e.relatedTarget)) {
+                    zone.classList.remove('drag-over');
+                }
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+            });
+        });
+    }
+
+    setupContextMenus() {
+        // Right-click context menus for enhanced desktop experience
+        const players = document.querySelectorAll('.player');
+
+        players.forEach(player => {
+            player.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                this.showPlayerContextMenu(e, player);
+            });
+        });
+
+        // Close context menu on click outside
+        document.addEventListener('click', () => {
+            this.hideContextMenu();
+        });
+    }
+
+    showPlayerContextMenu(e, player) {
+        this.hideContextMenu(); // Hide any existing menu
+
+        const menu = document.createElement('div');
+        menu.className = 'context-menu';
+        menu.innerHTML = `
+            <button class="context-menu-item" data-action="edit">Edit Player</button>
+            <button class="context-menu-item" data-action="remove">Remove Player</button>
+            <div class="context-menu-separator"></div>
+            <button class="context-menu-item" data-action="move-team1">Move to Team 1</button>
+            <button class="context-menu-item" data-action="move-team2">Move to Team 2</button>
+            <button class="context-menu-item" data-action="move-available">Move to Available</button>
+        `;
+
+        menu.style.left = `${e.pageX}px`;
+        menu.style.top = `${e.pageY}px`;
+
+        document.body.appendChild(menu);
+
+        // Handle menu item clicks
+        menu.addEventListener('click', (e) => {
+            const action = e.target.dataset.action;
+            if (action) {
+                this.handleContextMenuAction(action, player);
+                this.hideContextMenu();
+            }
+        });
+
+        // Position menu to stay within viewport
+        const rect = menu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) {
+            menu.style.left = `${e.pageX - rect.width}px`;
+        }
+        if (rect.bottom > window.innerHeight) {
+            menu.style.top = `${e.pageY - rect.height}px`;
+        }
+    }
+
+    hideContextMenu() {
+        const existingMenu = document.querySelector('.context-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+    }
+
+    handleContextMenuAction(action, player) {
+        switch (action) {
+            case 'edit':
+                // Implement edit player functionality
+                const newName = prompt('Enter new player name:', player.textContent);
+                if (newName && newName.trim()) {
+                    player.textContent = newName.trim();
+                }
+                break;
+            case 'remove':
+                if (confirm('Are you sure you want to remove this player?')) {
+                    player.remove();
+                }
+                break;
+            case 'move-team1':
+                this.movePlayerToTeam(player, 1);
+                break;
+            case 'move-team2':
+                this.movePlayerToTeam(player, 2);
+                break;
+            case 'move-available':
+                this.movePlayerToAvailable(player);
+                break;
+        }
+    }
+
+    movePlayerToTeam(player, teamNumber) {
+        const teamContainer = document.querySelector(`#team${teamNumber}-players`);
+        if (teamContainer) {
+            teamContainer.appendChild(player);
+        }
+    }
+
+    movePlayerToAvailable(player) {
+        const availableContainer = document.querySelector('#available-players');
+        if (availableContainer) {
+            availableContainer.appendChild(player);
+        }
+    }
+
+    setupDesktopAnimations() {
+        // Enhanced animations for desktop
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                }
+            });
+        }, observerOptions);
+
+        // Observe cards and other elements for scroll animations
+        const animatedElements = document.querySelectorAll('.card, .team, .btn');
+        animatedElements.forEach(el => observer.observe(el));
+    }
+
+    handleButtonHover(e) {
+        const btn = e.target;
+        btn.style.transform = 'translateY(-2px) scale(1.02)';
+    }
+
+    handleButtonLeave(e) {
+        const btn = e.target;
+        btn.style.transform = '';
+    }
+
+    handleCardHover(e) {
+        const card = e.target;
+        card.style.transform = 'translateY(-5px)';
+    }
+
+    handleCardLeave(e) {
+        const card = e.target;
+        card.style.transform = '';
+    }
+
+    handleArrowKeyNavigation(e) {
+        const focusedElement = document.activeElement;
+
+        // Navigate between buttons in the same container
+        if (focusedElement.classList.contains('btn')) {
+            const container = focusedElement.closest('.difficulty-slots, .options-grid, .confirmation-buttons');
+            if (container) {
+                const buttons = Array.from(container.querySelectorAll('.btn'));
+                const currentIndex = buttons.indexOf(focusedElement);
+
+                let nextIndex;
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    nextIndex = (currentIndex + 1) % buttons.length;
+                } else {
+                    nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+                }
+
+                e.preventDefault();
+                buttons[nextIndex].focus();
+            }
+        }
+    }
+
+    closeActiveOverlay() {
+        const activeOverlay = document.querySelector('.full-screen-overlay.active');
+        if (activeOverlay) {
+            activeOverlay.classList.remove('active');
+        }
+    }
+
+    enableDesktopFeatures() {
+        document.body.classList.add('desktop-mode');
+        this.setupDesktopFeatures();
+    }
+
+    disableDesktopFeatures() {
+        document.body.classList.remove('desktop-mode');
+        this.hideContextMenu();
+    }
+}
+
+// Initialize desktop enhancements
+const desktopManager = new DesktopEnhancementManager();
 
 // ===== COMPREHENSIVE CROSS-DEVICE COMPATIBILITY SYSTEM =====
 
@@ -394,11 +799,7 @@ class CrossDeviceCompatibilityManager {
     }
 
     init() {
-        console.log('🔧 Initializing Cross-Device Compatibility Manager...');
-        console.log('Device Info:', this.deviceInfo);
-        console.log('Performance Profile:', this.performanceProfile);
-        console.log('Touch Capabilities:', this.touchCapabilities);
-
+        // Remove console logs that appear as reports on mobile
         this.applyDeviceSpecificOptimizations();
         this.setupEventListeners();
         this.optimizeForPerformance();
@@ -407,8 +808,37 @@ class CrossDeviceCompatibilityManager {
         if (this.deviceInfo.isSafari) {
             this.applySafariOptimizations();
         }
+    }
 
-        console.log('✅ Cross-Device Compatibility Manager initialized');
+    optimizeForPerformance() {
+        const level = this.performanceProfile.level;
+
+        if (level === 'low') {
+            // Disable complex animations
+            const complexElements = document.querySelectorAll('.cosmic-dust, .nebula-2, .nebula-3, .planet-2, .planet-3');
+            complexElements.forEach(el => el.style.display = 'none');
+
+            // Reduce animation complexity
+            const starsLayers = document.querySelectorAll('.stars-layer-2, .stars-layer-3');
+            starsLayers.forEach(layer => {
+                layer.style.animationDuration = '300s';
+                layer.style.opacity = '0.2';
+            });
+        } else if (level === 'medium') {
+            // Moderate optimizations
+            const complexElements = document.querySelectorAll('.cosmic-dust, .nebula-3, .planet-3');
+            complexElements.forEach(el => el.style.display = 'none');
+        }
+
+        // Apply reduced motion preferences
+        if (this.performanceProfile.prefersReducedMotion) {
+            document.body.classList.add('reduced-motion');
+            const animatedElements = document.querySelectorAll('.stars-layer, .nebula, .planet');
+            animatedElements.forEach(el => {
+                el.style.animationDuration = '600s';
+                el.style.animationTimingFunction = 'linear';
+            });
+        }
     }
 
     applyDeviceSpecificOptimizations() {
@@ -450,13 +880,13 @@ class CrossDeviceCompatibilityManager {
                 layer.style.opacity = '0.2';
             });
 
-            console.log('🔧 Applied low-performance optimizations');
+            // Low-performance optimizations applied
         } else if (level === 'medium') {
             // Moderate optimizations
             const complexElements = document.querySelectorAll('.cosmic-dust, .nebula-3, .planet-3');
             complexElements.forEach(el => el.style.display = 'none');
 
-            console.log('🔧 Applied medium-performance optimizations');
+            // Medium-performance optimizations applied
         }
 
         // Apply reduced motion preferences
@@ -468,7 +898,7 @@ class CrossDeviceCompatibilityManager {
                 el.style.animationTimingFunction = 'linear';
             });
 
-            console.log('🔧 Applied reduced motion optimizations');
+            // Reduced motion optimizations applied
         }
     }
 
@@ -503,7 +933,7 @@ class CrossDeviceCompatibilityManager {
     }
 
     handleOrientationChange() {
-        console.log('📱 Orientation changed');
+        // Handle orientation change
 
         // Update viewport height for Safari
         if (this.deviceInfo.isSafari) {
@@ -521,7 +951,6 @@ class CrossDeviceCompatibilityManager {
     }
 
     handleResize() {
-        console.log('📐 Window resized');
         this.optimizeLayout();
     }
 
@@ -537,7 +966,6 @@ class CrossDeviceCompatibilityManager {
 
     handleConnectionChange() {
         const connection = navigator.connection;
-        console.log('🌐 Connection changed:', connection.effectiveType);
 
         // Adjust performance based on new connection
         if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
@@ -584,13 +1012,13 @@ class CrossDeviceCompatibilityManager {
         const complexElements = document.querySelectorAll('.cosmic-dust, .nebula, .planet');
         complexElements.forEach(el => el.style.display = 'none');
 
-        console.log('🔧 Applied low-bandwidth optimizations');
+        // Low-bandwidth optimizations applied
     }
 
     setupTouchHandling() {
         if (!this.touchCapabilities.hasTouch) return;
 
-        console.log('👆 Setting up touch handling...');
+        // Setting up touch handling
 
         // Enhanced touch event handling
         const touchElements = document.querySelectorAll('.btn, .player, .card, input, .player-slider');
@@ -736,7 +1164,7 @@ class CrossDeviceCompatibilityManager {
     }
 
     applySafariOptimizations() {
-        console.log('🧭 Applying Safari-specific optimizations...');
+        // Applying Safari-specific optimizations
 
         // Add Safari-specific classes
         document.body.classList.add('safari-browser');
@@ -756,7 +1184,7 @@ class CrossDeviceCompatibilityManager {
         // Optimize Safari animations
         this.optimizeSafariAnimations();
 
-        console.log('✅ Safari optimizations applied');
+        // Safari optimizations applied
     }
 
     fixSafariViewport() {
@@ -867,7 +1295,7 @@ class CrossDeviceCompatibilityManager {
     }
 }
 
-// Initialize cross-device compatibility
+// ===== INITIALIZE COMPATIBILITY MANAGER =====
 const compatibilityManager = new CrossDeviceCompatibilityManager();
 
 // Safari-specific initialization function
@@ -1002,11 +1430,11 @@ class PerformanceMonitor {
 
             // Log performance in development
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                console.log(`Performance: ${this.metrics.fps} FPS, ${this.metrics.memoryUsage} MB`);
+                console.log(`Performance: ${this.metrics.fps} FPS (Target: 30), ${this.metrics.memoryUsage} MB`);
             }
 
-            // Auto-optimize if performance is poor
-            if (this.metrics.fps < 30) {
+            // Auto-optimize if performance is poor (adjusted for 30 FPS target)
+            if (this.metrics.fps < 20) {
                 this.applyPerformanceOptimizations();
             }
 
@@ -1014,7 +1442,10 @@ class PerformanceMonitor {
             this.metrics.lastTime = currentTime;
         }
 
-        requestAnimationFrame(() => this.monitorFrame());
+        // Throttle to 30 FPS maximum
+        setTimeout(() => {
+            requestAnimationFrame(() => this.monitorFrame());
+        }, 33); // ~30 FPS (1000ms / 30fps = 33ms)
     }
 
     applyPerformanceOptimizations() {
@@ -2193,7 +2624,7 @@ function initializeTactileFeedback() {
         });
     }
 
-    console.log('Enhanced tactile feedback system initialized for', gameControls.length, 'controls');
+    console.log('Enhanced tactile feedback system initialized successfully');
 }
 
 // Cleanup on page unload with error handling
@@ -2351,11 +2782,12 @@ let players = {
 
 let currentWord = '';
 let currentTeam = 1;
-let currentGuesser = null;
-let gameLog = [];
-let totalRounds = 5;
+// ===== GLOBAL GAME VARIABLES =====
+let totalRounds = 5; // Moved to top to avoid initialization issues
 let currentRound = 0;
 let numberOfPlayers = 0; // To store selected number of players
+let currentGuesser = null;
+let gameLog = [];
 let gameDifficulty = 'easy'; // Default difficulty
 let isWordVisible = true; // Track word visibility state
 let gameStarted = false; // Track if the game has started
@@ -4111,22 +4543,32 @@ class AnimationCoordinator {
 // Global animation coordinator
 const animationCoordinator = new AnimationCoordinator();
 
-// Enhanced performance monitoring for animations
+// Enhanced performance monitoring for animations (optimized for 30 FPS)
 function monitorAnimationPerformance() {
     let frameCount = 0;
     let lastTime = performance.now();
+    let lastFrameTime = 0;
+    const targetFPS = 30;
+    const frameInterval = 1000 / targetFPS;
 
     function checkFrame(currentTime) {
+        // Frame rate limiting to 30 FPS
+        if (currentTime - lastFrameTime < frameInterval) {
+            requestAnimationFrame(checkFrame);
+            return;
+        }
+        lastFrameTime = currentTime;
+
         frameCount++;
 
         if (currentTime - lastTime >= 1000) {
             const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
 
-            // Adjust animation quality based on performance
-            if (fps < 30) {
+            // Adjust animation quality based on performance (adjusted for 30 FPS target)
+            if (fps < 20) {
                 document.body.classList.add('low-performance');
                 console.warn('Low FPS detected, reducing animation complexity');
-            } else if (fps > 50) {
+            } else if (fps > 25) {
                 document.body.classList.remove('low-performance');
             }
 
@@ -4143,4 +4585,61 @@ function monitorAnimationPerformance() {
 // Initialize performance monitoring
 document.addEventListener('DOMContentLoaded', () => {
     monitorAnimationPerformance();
+});
+
+// ===== INITIALIZATION SEQUENCE =====
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        // Initialize space background
+        if (spaceBackground && !spaceBackground.isInitialized) {
+            spaceBackground.init();
+        }
+
+        // Initialize Safari optimizations if needed
+        if (typeof initializeSafariOptimizations === 'function') {
+            initializeSafariOptimizations();
+        }
+
+        // Set up initial game state
+        if (typeof setupInitialGameState === 'function') {
+            setupInitialGameState();
+        }
+
+        console.log('✅ All systems initialized successfully');
+    } catch (error) {
+        console.error('❌ Error during initialization:', error);
+        if (spaceErrorHandler && spaceErrorHandler.handleError) {
+            spaceErrorHandler.handleError(error);
+        }
+    }
+});
+
+// Ensure proper cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    try {
+        if (spaceBackground && spaceBackground.destroy) {
+            spaceBackground.destroy();
+        }
+
+        if (performanceMonitor && performanceMonitor.stop) {
+            performanceMonitor.stop();
+        }
+    } catch (error) {
+        console.error('Error during cleanup:', error);
+    }
+});
+
+// Handle visibility change for performance optimization
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        // Page is hidden, pause animations
+        if (spaceBackground && spaceBackground.pauseAnimations) {
+            spaceBackground.pauseAnimations();
+        }
+    } else {
+        // Page is visible, resume animations
+        if (spaceBackground && spaceBackground.resumeAnimations) {
+            spaceBackground.resumeAnimations();
+        }
+    }
 });

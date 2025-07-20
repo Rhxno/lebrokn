@@ -234,19 +234,91 @@ body {
 /* Desktop: 1200px and up */
 @media screen and (min-width: 1200px) and (max-width: 1439px) {
     html { font-size: 20px; }
-    .container { max-width: 1200px; }
+    .container { 
+        max-width: 1200px; 
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    /* Desktop-specific layout improvements */
+    .teams {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        max-width: 1000px;
+        margin: 2rem auto;
+    }
+    
+    .team {
+        min-width: 400px;
+    }
+    
+    .full-screen-overlay .card-content {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .difficulty-slots,
+    .options-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        max-width: 500px;
+        margin: 0 auto;
+    }
 }
 
 /* Large Desktop: 1440px and up */
 @media screen and (min-width: 1440px) {
     html { font-size: 21px; }
-    .container { max-width: 1400px; }
+    .container { 
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2.5rem;
+    }
+    
+    .teams {
+        gap: 4rem;
+        max-width: 1200px;
+    }
+    
+    .team {
+        min-width: 450px;
+    }
+    
+    .full-screen-overlay .card-content {
+        max-width: 700px;
+    }
+    
+    .difficulty-slots,
+    .options-grid {
+        grid-template-columns: repeat(4, 1fr);
+        max-width: 800px;
+    }
 }
 
 /* Ultra-wide screens: 1920px and up */
 @media screen and (min-width: 1920px) {
     html { font-size: 22px; }
-    .container { max-width: 1600px; }
+    .container { 
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 3rem;
+    }
+    
+    .teams {
+        gap: 5rem;
+        max-width: 1400px;
+    }
+    
+    .team {
+        min-width: 500px;
+    }
+    
+    .full-screen-overlay .card-content {
+        max-width: 800px;
+    }
+}
 }
 
 /* Touch-Friendly Responsive Utilities */
@@ -419,6 +491,104 @@ textarea {
 @media (min-width: 1024px) {
     .desktop-up {
         display: block;
+    }
+    
+    /* Desktop-specific enhancements */
+    body {
+        cursor: default;
+    }
+    
+    .btn {
+        cursor: pointer;
+        transition: all var(--animation-duration-fast) var(--animation-easing-smooth);
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 
+            0 0 var(--glow-radius-medium) rgba(0, 247, 255, 0.4),
+            0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .btn:active {
+        transform: translateY(0) scale(0.98);
+    }
+    
+    .card {
+        transition: all var(--animation-duration-normal) var(--animation-easing-smooth);
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 
+            0 0 var(--glow-radius-large) rgba(0, 247, 255, 0.2),
+            0 15px 40px rgba(0, 0, 0, 0.4);
+    }
+    
+    .player {
+        cursor: grab;
+        transition: all var(--animation-duration-fast) var(--animation-easing-smooth);
+    }
+    
+    .player:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
+    }
+    
+    .player.dragging {
+        cursor: grabbing;
+        transform: rotate(5deg) scale(1.1);
+        z-index: 1000;
+    }
+    
+    /* Desktop navigation improvements */
+    .navbar {
+        padding: 1rem 2rem;
+    }
+    
+    .logo {
+        font-size: 2rem;
+        cursor: pointer;
+    }
+    
+    /* Desktop form improvements */
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+        transition: all var(--animation-duration-fast) var(--animation-easing-smooth);
+    }
+    
+    input[type="text"]:hover,
+    input[type="number"]:hover,
+    select:hover,
+    textarea:hover {
+        border-color: var(--space-primary);
+        box-shadow: 0 0 10px rgba(0, 247, 255, 0.3);
+    }
+    
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+        outline: none;
+        border-color: var(--space-primary);
+        box-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
+    }
+    
+    /* Desktop slider improvements */
+    .player-slider {
+        cursor: pointer;
+    }
+    
+    .player-slider:hover::-webkit-slider-thumb {
+        transform: scale(1.2);
+        box-shadow: 0 0 15px rgba(0, 247, 255, 0.7);
+    }
+    
+    .player-slider:hover::-moz-range-thumb {
+        transform: scale(1.2);
+        box-shadow: 0 0 15px rgba(0, 247, 255, 0.7);
     }
 }
 
@@ -5553,5 +5723,715 @@ h1, h2, h3, h4, h5, h6 {
     .container {
         background: white !important;
         color: black !important;
+    }
+}
+/* =
+==== DESKTOP-SPECIFIC ENHANCEMENTS ===== */
+
+/* Desktop Container and Layout */
+@media (min-width: 1024px) {
+    .container {
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    /* Desktop game setup layout */
+    .game-setup {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+    
+    .setup-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .setup-item label {
+        font-weight: bold;
+        color: var(--space-primary);
+    }
+    
+    /* Desktop team management */
+    .setup-section {
+        grid-column: 1 / -1;
+    }
+    
+    #available-players {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        min-height: 120px;
+        padding: 1.5rem;
+    }
+    
+    .teams {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        margin: 2rem 0;
+    }
+    
+    .team {
+        min-height: 400px;
+    }
+    
+    .leader-slot {
+        min-height: 100px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .players-list {
+        min-height: 200px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    /* Desktop game controls */
+    .game-controls {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        align-items: center;
+    }
+    
+    .word-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .word-controls {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .word-display {
+        font-size: 2rem;
+        padding: 1rem;
+        background: rgba(0, 247, 255, 0.1);
+        border: 2px solid var(--space-primary);
+        border-radius: var(--cosmic-border-radius);
+        text-align: center;
+        min-height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Desktop referee controls */
+    .team-logs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+    }
+    
+    .team-log {
+        padding: 1.5rem;
+        background: var(--space-surface);
+        border-radius: var(--cosmic-border-radius);
+        border: 2px solid rgba(0, 247, 255, 0.3);
+    }
+    
+    .log-input-container {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .log-input-container input {
+        flex: 1;
+    }
+    
+    .mic-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    
+    /* Desktop results section */
+    .results-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+    }
+    
+    .results-column {
+        padding: 1.5rem;
+        background: var(--space-surface);
+        border-radius: var(--cosmic-border-radius);
+        border: 2px solid rgba(0, 247, 255, 0.3);
+    }
+    
+    /* Desktop modal and overlay improvements */
+    .full-screen-overlay {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+    
+    .card-content {
+        max-width: 600px;
+        width: 100%;
+        padding: 3rem;
+        text-align: center;
+    }
+    
+    .card-content h2 {
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .player-slider-container {
+        margin: 2rem 0;
+    }
+    
+    .slider-value-container {
+        font-size: 1.5rem;
+        margin-top: 1rem;
+        color: var(--space-primary);
+        font-weight: bold;
+    }
+    
+    .difficulty-slots {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .options-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .difficulty-slot-btn,
+    .round-slot-btn {
+        padding: 1.5rem;
+        font-size: 1.2rem;
+        min-height: 80px;
+    }
+    
+    /* Desktop turn overlay */
+    .turn-overlay {
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+    }
+    
+    .turn-message {
+        max-width: 500px;
+        padding: 3rem;
+    }
+    
+    .turn-message h2 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .turn-message p {
+        font-size: 1.5rem;
+    }
+    
+    /* Desktop confirmation dialog */
+    .confirmation-message {
+        max-width: 400px;
+    }
+    
+    .confirmation-buttons {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .confirmation-buttons .btn {
+        flex: 1;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+    }
+    
+    /* Desktop error modal */
+    .modal-content {
+        max-width: 500px;
+        padding: 2rem;
+        margin: 2rem;
+    }
+    
+    .close-btn {
+        font-size: 2rem;
+        padding: 0.5rem;
+        min-width: 40px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .close-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+}
+
+/* Desktop keyboard navigation */
+@media (min-width: 1024px) {
+    .btn:focus,
+    input:focus,
+    select:focus,
+    textarea:focus {
+        outline: 2px solid var(--space-primary);
+        outline-offset: 2px;
+    }
+    
+    .btn:focus:not(:focus-visible) {
+        outline: none;
+    }
+    
+    /* Keyboard navigation for draggable elements */
+    .player:focus {
+        outline: 2px solid var(--space-primary);
+        outline-offset: 2px;
+        box-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
+    }
+    
+    /* Tab navigation improvements */
+    .btn,
+    input,
+    select,
+    textarea,
+    .player[draggable="true"] {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* Desktop scrollbar styling */
+@media (min-width: 1024px) {
+    /* Webkit browsers */
+    ::-webkit-scrollbar {
+        width: 12px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: rgba(10, 20, 40, 0.5);
+        border-radius: 6px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, var(--space-primary), var(--space-secondary));
+        border-radius: 6px;
+        border: 2px solid rgba(10, 20, 40, 0.5);
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, var(--space-secondary), var(--space-accent));
+        box-shadow: 0 0 10px rgba(0, 247, 255, 0.5);
+    }
+    
+    /* Firefox */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--space-primary) rgba(10, 20, 40, 0.5);
+    }
+}
+
+/* Desktop performance optimizations */
+@media (min-width: 1024px) {
+    .space-background {
+        will-change: auto;
+    }
+    
+    .stars-layer,
+    .nebula,
+    .planet,
+    .cosmic-dust {
+        will-change: transform;
+    }
+    
+    /* Enable more complex animations on desktop */
+    .cosmic-dust {
+        display: block;
+        opacity: 0.6;
+    }
+    
+    .nebula-2,
+    .nebula-3,
+    .planet-2,
+    .planet-3 {
+        display: block;
+    }
+    
+    /* Desktop hover effects for space elements */
+    .card:hover .cosmic-dust {
+        animation-duration: 30s;
+        opacity: 0.8;
+    }
+    
+    .btn:hover {
+        animation: cosmic-glow 2s ease-in-out infinite;
+    }
+}
+
+@keyframes cosmic-glow {
+    0%, 100% {
+        box-shadow: 
+            0 0 var(--glow-radius-small) rgba(0, 247, 255, 0.3),
+            0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    50% {
+        box-shadow: 
+            0 0 var(--glow-radius-medium) rgba(0, 247, 255, 0.6),
+            0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Desktop context menu styling */
+@media (min-width: 1024px) {
+    .context-menu {
+        position: fixed;
+        background: var(--space-surface);
+        border: 2px solid var(--space-primary);
+        border-radius: var(--cosmic-border-radius);
+        padding: 0.5rem 0;
+        min-width: 200px;
+        box-shadow: 
+            0 0 var(--glow-radius-medium) rgba(0, 247, 255, 0.3),
+            0 10px 30px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        z-index: 10000;
+    }
+    
+    .context-menu-item {
+        padding: 0.75rem 1rem;
+        color: var(--space-light);
+        cursor: pointer;
+        transition: all var(--animation-duration-fast) var(--animation-easing-smooth);
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        font-family: inherit;
+        font-size: 0.9rem;
+    }
+    
+    .context-menu-item:hover {
+        background: rgba(0, 247, 255, 0.1);
+        color: var(--space-primary);
+        padding-left: 1.5rem;
+    }
+    
+    .context-menu-separator {
+        height: 1px;
+        background: rgba(0, 247, 255, 0.3);
+        margin: 0.5rem 0;
+    }
+}/* ====
+= DESKTOP ANIMATION ENHANCEMENTS ===== */
+
+/* Scroll-triggered animations */
+@media (min-width: 1024px) {
+    .card,
+    .team,
+    .btn {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .card.animate-in,
+    .team.animate-in,
+    .btn.animate-in {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    /* Staggered animation delays */
+    .card:nth-child(1) { transition-delay: 0.1s; }
+    .card:nth-child(2) { transition-delay: 0.2s; }
+    .card:nth-child(3) { transition-delay: 0.3s; }
+    .card:nth-child(4) { transition-delay: 0.4s; }
+    
+    .team:nth-child(1) { transition-delay: 0.2s; }
+    .team:nth-child(2) { transition-delay: 0.4s; }
+}
+
+/* Desktop drag and drop visual enhancements */
+@media (min-width: 1024px) {
+    .drag-over {
+        background: rgba(0, 247, 255, 0.1) !important;
+        border-color: var(--space-primary) !important;
+        box-shadow: 
+            0 0 var(--glow-radius-large) rgba(0, 247, 255, 0.4),
+            inset 0 0 var(--glow-radius-medium) rgba(0, 247, 255, 0.2) !important;
+        transform: scale(1.02);
+    }
+    
+    .player.dragging {
+        opacity: 0.8;
+        transform: rotate(5deg) scale(1.1);
+        z-index: 1000;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Enhanced drop zone indicators */
+    .team::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 3px dashed transparent;
+        border-radius: var(--cosmic-border-radius);
+        pointer-events: none;
+        transition: all var(--animation-duration-fast) var(--animation-easing-smooth);
+    }
+    
+    .team.drag-over::after {
+        border-color: var(--space-primary);
+        background: rgba(0, 247, 255, 0.05);
+    }
+}
+
+/* Desktop input focus enhancements */
+@media (min-width: 1024px) {
+    .input-focused {
+        transform: scale(1.02);
+        transition: transform var(--animation-duration-fast) var(--animation-easing-smooth);
+    }
+    
+    .input-focused input {
+        box-shadow: 
+            0 0 var(--glow-radius-medium) rgba(0, 247, 255, 0.5),
+            0 0 var(--glow-radius-small) rgba(255, 0, 119, 0.3);
+    }
+}
+
+/* Desktop button press animations */
+@media (min-width: 1024px) {
+    .btn:active {
+        transform: translateY(0) scale(0.98) !important;
+        transition: transform 0.1s ease-out;
+    }
+    
+    .btn.primary-btn:hover {
+        background: linear-gradient(135deg, 
+            rgba(0, 247, 255, 0.9), 
+            rgba(119, 0, 255, 0.8));
+        box-shadow: 
+            0 0 var(--glow-radius-large) rgba(0, 247, 255, 0.6),
+            0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .btn.secondary-btn:hover {
+        background: linear-gradient(135deg, 
+            rgba(0, 162, 255, 0.9), 
+            rgba(0, 247, 255, 0.8));
+    }
+}
+
+/* Desktop modal and overlay animations */
+@media (min-width: 1024px) {
+    .full-screen-overlay {
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+    }
+    
+    .full-screen-overlay.active .card-content {
+        animation: desktop-modal-enter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .turn-overlay.active .turn-message {
+        animation: desktop-turn-enter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+}
+
+@keyframes desktop-modal-enter {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(50px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes desktop-turn-enter {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) rotateX(15deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotateX(0);
+    }
+}
+
+/* Desktop space background enhancements */
+@media (min-width: 1024px) {
+    .space-background {
+        /* Enable more complex animations on desktop */
+        animation-duration: 120s;
+    }
+    
+    .stars-layer-1 {
+        animation-duration: 200s;
+    }
+    
+    .stars-layer-2 {
+        animation-duration: 300s;
+    }
+    
+    .stars-layer-3 {
+        animation-duration: 400s;
+    }
+    
+    .nebula {
+        opacity: 0.4;
+        animation-duration: 180s;
+    }
+    
+    .planet {
+        animation-duration: 240s;
+    }
+    
+    .cosmic-dust {
+        opacity: 0.3;
+        animation-duration: 160s;
+    }
+    
+    /* Interactive space elements on hover */
+    .card:hover ~ .space-background .stars-layer-1 {
+        animation-duration: 100s;
+    }
+    
+    .btn:hover ~ .space-background .cosmic-dust {
+        opacity: 0.5;
+    }
+}
+
+/* Desktop typography enhancements */
+@media (min-width: 1024px) {
+    h1, h2, h3 {
+        text-shadow: 0 0 10px rgba(0, 247, 255, 0.3);
+    }
+    
+    .logo {
+        text-shadow: 
+            0 0 20px rgba(0, 247, 255, 0.6),
+            0 0 40px rgba(119, 0, 255, 0.4);
+        transition: all var(--animation-duration-normal) var(--animation-easing-smooth);
+    }
+    
+    .logo:hover {
+        text-shadow: 
+            0 0 30px rgba(0, 247, 255, 0.8),
+            0 0 60px rgba(119, 0, 255, 0.6);
+        transform: scale(1.05);
+    }
+}
+
+/* Desktop accessibility enhancements */
+@media (min-width: 1024px) {
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+        .btn {
+            border: 2px solid currentColor;
+        }
+        
+        .card {
+            border: 2px solid var(--space-primary);
+        }
+        
+        .player {
+            border: 2px solid var(--space-light);
+        }
+    }
+    
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+        .card,
+        .team,
+        .btn {
+            transition: none;
+            animation: none;
+        }
+        
+        .btn:hover,
+        .card:hover {
+            transform: none;
+        }
+        
+        .space-background * {
+            animation: none;
+        }
+    }
+    
+    /* Focus indicators for keyboard navigation */
+    .btn:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+        outline: 3px solid var(--space-primary);
+        outline-offset: 2px;
+        box-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
+    }
+    
+    .player:focus-visible {
+        outline: 3px solid var(--space-primary);
+        outline-offset: 2px;
+        box-shadow: 0 0 20px rgba(0, 247, 255, 0.7);
+    }
+}
+
+/* Desktop print styles */
+@media print {
+    .space-background,
+    .cosmic-dust,
+    .nebula,
+    .planet,
+    .stars-layer {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .card {
+        border: 2px solid black !important;
+        box-shadow: none !important;
+        background: white !important;
+    }
+    
+    .btn {
+        border: 2px solid black !important;
+        background: white !important;
+        color: black !important;
+    }
+}
+
+/* Desktop selection styling */
+@media (min-width: 1024px) {
+    ::selection {
+        background: rgba(0, 247, 255, 0.3);
+        color: var(--space-light);
+    }
+    
+    ::-moz-selection {
+        background: rgba(0, 247, 255, 0.3);
+        color: var(--space-light);
     }
 }
