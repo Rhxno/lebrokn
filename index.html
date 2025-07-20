@@ -2,7 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, shrink-to-fit=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- Safari-specific optimizations -->
+    <meta name="apple-mobile-web-app-title" content="Password Game">
+    <meta name="theme-color" content="#0a0f1f">
+    <meta name="msapplication-navbutton-color" content="#0a0f1f">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="description" content="A fun and interactive word party game.">
     <title>Password - Word Party Game</title>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,6 +20,30 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Animated Space Background System -->
+    <div class="space-background">
+        <!-- Multi-Layer Starfield -->
+        <div class="stars-layer stars-layer-1"></div>
+        <div class="stars-layer stars-layer-2"></div>
+        <div class="stars-layer stars-layer-3"></div>
+        
+        <!-- Floating Cosmic Elements -->
+        <div class="cosmic-elements">
+            <!-- Nebulae -->
+            <div class="nebula nebula-1"></div>
+            <div class="nebula nebula-2"></div>
+            <div class="nebula nebula-3"></div>
+            
+            <!-- Planets -->
+            <div class="planet planet-1"></div>
+            <div class="planet planet-2"></div>
+            <div class="planet planet-3"></div>
+            
+            <!-- Cosmic Dust -->
+            <div class="cosmic-dust"></div>
+        </div>
+    </div>
+
     <div class="container">
         <section class="full-screen-overlay active" id="player-select-screen">
             <div class="card-content">
@@ -169,5 +203,8 @@
         </div>
     </div>
     <script src="script.js"></script>
+    <script src="test-framework.js"></script>
+    <script src="final-validation.js"></script>
+    <script src="error-check.js"></script>
 </body>
 </html>
