@@ -1861,4 +1861,8 @@ h1, h2, h3 {
     border-color: var(--primary-color);
     background: rgba(0, 238, 255, 0.1);
     transition: all 0.3s ease;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> cf2702d0a25a53720e8d34f8facd5d5807594095
