@@ -23,12 +23,16 @@ let pendingSwitch = null; // Track the pending switch action
 let maxTeamSize = 0; // Declare maxTeamSize globally
 let currentPlayerIndex = { 1: 0, 2: 0 }; // Track current player index for each team
 
-// At the top of your script, outside any function:
-let draggedItem = null;
-let originalParent = null;
-let originalNextSibling = null;
-let offsetX = 0;
-let offsetY = 0;
+// Drag and Drop State
+let dragState = {
+    element: null,
+    originalParent: null,
+    originalIndex: null,
+    startX: 0,
+    startY: 0,
+    isDragging: false,
+    dragClone: null
+};
 
 // --- Speech Recognition Variables ---
 let recognition = null;
@@ -225,10 +229,10 @@ function addPlayer() {
     if (!playerName) return; // Don't add empty names
 
     const nameExists = players.available.includes(playerName) ||
-                      players.team1.includes(playerName) ||
-                      players.team2.includes(playerName) ||
-                      players.team1Leader === playerName ||
-                      players.team2Leader === playerName;
+        players.team1.includes(playerName) ||
+        players.team2.includes(playerName) ||
+        players.team1Leader === playerName ||
+        players.team2Leader === playerName;
 
     if (nameExists) {
         showErrorModal('A player with this name already exists!');
@@ -246,11 +250,17 @@ function addPlayer() {
 }
 
 function updateAvailablePlayers() {
-    const availablePlayersElement = document.getElementById('available-players');
+    const availablePlayersElement = document.getElementById('available-players-setup');
+    if (!availablePlayersElement) {
+        console.warn('Available players element not found');
+        return;
+    }
     availablePlayersElement.innerHTML = '';
     players.available.forEach(playerId => {
         const playerElement = document.getElementById(playerId);
-        availablePlayersElement.appendChild(playerElement);
+        if (playerElement) {
+            availablePlayersElement.appendChild(playerElement);
+        }
     });
 }
 
@@ -292,161 +302,246 @@ function updatePlayerDropdowns() {
     });
 }
 
-// --- Drag and Drop ---
-function allowDrop(event) {
-    event.preventDefault();
-}
-
-// --- Touch Drag-and-Drop Handlers ---
-
-// offsetX/Y will store the distance from the element's top-left corner
-// to the initial touch point, calculated using PAGE coordinates.
-function handleTouchStart(event) {
-    if (gameStarted) return;
-    event.preventDefault();
-    console.log("Touch Start:", event.target.textContent);
-
-    draggedItem = event.target;
-    originalParent = draggedItem.parentNode;
-    originalNextSibling = draggedItem.nextSibling;
-
-    const touch = event.touches[0];
-    const rect = draggedItem.getBoundingClientRect();
-
-    // --- Calculate offset using PAGE coordinates ---
-    const scrollX = window.pageXOffset;
-    const scrollY = window.pageYOffset;
-    const elementPageX = rect.left + scrollX;
-    const elementPageY = rect.top + scrollY;
-    offsetX = touch.pageX - elementPageX;
-    offsetY = touch.pageY - elementPageY;
-    // --- End offset calculation ---
-
-    // Apply dragging styles and fixed positioning
-    draggedItem.classList.add('dragging');
-    draggedItem.style.position = 'fixed';
-    draggedItem.style.zIndex = '1000';
-    draggedItem.style.left = '';
-    draggedItem.style.top = '';
-    draggedItem.style.transform = '';
-
-    // --- Defer initial positioning ---
-    requestAnimationFrame(() => {
-        if (!draggedItem) return;
-        const initialX = touch.pageX - offsetX - window.pageXOffset;
-        const initialY = touch.pageY - offsetY - window.pageYOffset;
-        draggedItem.style.left = `${initialX}px`;
-        draggedItem.style.top = `${initialY}px`;
-        console.log("Initial Position Applied (RAF):", `left: ${initialX}px, top: ${initialY}px`);
-        console.log(`  Touch PageY: ${touch.pageY}, ScrollY: ${window.pageYOffset}, OffsetY (page-based): ${offsetY}`);
+// --- Modern Drag and Drop System ---
+function initializeDragAndDrop() {
+    // Add event listeners to drop zones
+    const dropZones = document.querySelectorAll('.players-list, .leader-slot, #available-players');
+    dropZones.forEach(zone => {
+        zone.addEventListener('dragover', handleDragOver);
+        zone.addEventListener('drop', handleDrop);
+        zone.addEventListener('dragenter', handleDragEnter);
+        zone.addEventListener('dragleave', handleDragLeave);
     });
 }
 
-function handleTouchMove(event) {
-    if (!draggedItem || gameStarted) return;
-    event.preventDefault();
-
-    const touch = event.touches[0];
-    const x = touch.pageX - offsetX - window.pageXOffset;
-    const y = touch.pageY - offsetY - window.pageYOffset;
-
-    draggedItem.style.left = `${x}px`;
-    draggedItem.style.top = `${y}px`;
-
-    removeDropTargetHighlight();
-    draggedItem.style.visibility = 'hidden';
-    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-    draggedItem.style.visibility = 'visible';
-
-    if (elementBelow) {
-        const dropTarget = elementBelow.closest('.players-list, .leader-slot, #available-players');
-        if (dropTarget && dropTarget !== originalParent) {
-            dropTarget.classList.add('drag-over');
-        }
-    }
-}
-
-function resetDraggedItem() {
-    // Restore position in original parent
-    if (draggedItem && originalParent) {
-        // Remove fixed positioning BEFORE re-inserting
-        draggedItem.style.position = '';
-        // *** Clear top/left instead of transform ***
-        draggedItem.style.left = '';
-        draggedItem.style.top = '';
-        draggedItem.style.zIndex = '';
-        // draggedItem.style.transform = ''; // Not using transform
-        draggedItem.classList.remove('dragging');
-
-        // Re-insert into original position
-        if (originalNextSibling && originalNextSibling.parentNode === originalParent) {
-            originalParent.insertBefore(draggedItem, originalNextSibling);
-        } else {
-            originalParent.appendChild(draggedItem);
-        }
-    }
-
-    // Clear state variables
-    draggedItem = null;
-    originalParent = null;
-    originalNextSibling = null;
-    removeDropTargetHighlight(); // Ensure highlight is cleared
-}
-
-function drag(event) {
-    event.dataTransfer.setData("text/plain", event.target.textContent);
-    console.log("Dragging player:", event.target.textContent);
-}
-
-function drop(ev) {
-    ev.preventDefault();
-    if (gameStarted) return;
-
-    const playerName = ev.dataTransfer.getData("text");
-    const teamElement = ev.target.closest('.team');
-    const teamId = teamElement ? teamElement.id : null;
-
-    if (teamId === 'team1' || teamId === 'team2') {
-        const team = teamId === 'team1' ? 'team1' : 'team2';
-
-        if (players[team].length >= maxTeamSize) {
-            showErrorModal(`Team ${teamId} is already full (max ${maxTeamSize} players)!`);
-            return;
-        }
-
-        showConfirmationDialog(`Are you sure you want to move ${playerName} to ${team}?`, () => {
-            removePlayerFromAllGroups(playerName);
-
-            players[team].push(playerName);
-            updateTeamPlayersDisplay();
-            updateAvailablePlayersDisplay();
-            updatePlayerDropdowns();
-        });
-    }
-}
-
-function dropLeader(ev, teamNumber) {
-    ev.preventDefault();
-    if (gameStarted) return;
-
-    const playerName = ev.dataTransfer.getData("text");
-    const leaderElement = document.getElementById(`team${teamNumber}-leader`);
-
-    const team = `team${teamNumber}`;
-
-    if (players[team].length >= maxTeamSize) {
-        showErrorModal(`Team ${team} is already full (max ${maxTeamSize} players)!`);
+function handleDragStart(event) {
+    if (gameStarted) {
+        event.preventDefault();
         return;
     }
 
-    showConfirmationDialog(`Are you sure you want to make ${playerName} the leader of Team ${teamNumber}?`, () => {
-        removePlayerFromAllGroups(playerName);
-        leaderElement.textContent = playerName;
-        players[team] = [playerName];
-        updateTeamPlayersDisplay();
-        updateAvailablePlayersDisplay();
-        updatePlayerDropdowns();
-    });
+    dragState.element = event.target;
+    dragState.originalParent = event.target.parentNode;
+    dragState.originalIndex = Array.from(dragState.originalParent.children).indexOf(event.target);
+    dragState.isDragging = true;
+
+    event.target.classList.add('dragging');
+    event.dataTransfer.setData('text/plain', event.target.textContent);
+    event.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragEnd(event) {
+    event.target.classList.remove('dragging');
+    clearDropZoneHighlights();
+    dragState.isDragging = false;
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(event) {
+    event.preventDefault();
+    if (dragState.isDragging && event.currentTarget !== dragState.originalParent) {
+        event.currentTarget.classList.add('drag-over');
+    }
+}
+
+function handleDragLeave(event) {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+        event.currentTarget.classList.remove('drag-over');
+    }
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    if (gameStarted) return;
+
+    const dropZone = event.currentTarget;
+    const playerName = event.dataTransfer.getData('text/plain');
+
+    clearDropZoneHighlights();
+
+    if (!playerName || !dragState.element) return;
+
+    // Determine drop target type
+    const isAvailableZone = dropZone.id === 'available-players';
+    const isLeaderSlot = dropZone.classList.contains('leader-slot');
+    const isTeamZone = dropZone.classList.contains('players-list') && dropZone.closest('.team');
+
+    if (isAvailableZone) {
+        handleDropToAvailable(playerName);
+    } else if (isLeaderSlot) {
+        const teamNumber = getTeamNumberFromElement(dropZone);
+        handleDropToLeader(playerName, teamNumber);
+    } else if (isTeamZone) {
+        const teamNumber = getTeamNumberFromElement(dropZone);
+        handleDropToTeam(playerName, teamNumber);
+    }
+}
+
+function handleDropToAvailable(playerName) {
+    // Check if we're in team setup mode
+    const availableContainer = document.getElementById('available-players-setup');
+
+    if (availableContainer) {
+        // Team setup mode - handle DOM-based drag and drop
+        handleTeamSetupDropToAvailable(playerName);
+        return;
+    }
+
+    // Original game mode logic
+    const currentLocation = getPlayerLocation(playerName);
+    if (currentLocation === 'available') return;
+
+    showConfirmationDialog(
+        `Move ${playerName} back to Available Players?`,
+        () => {
+            removePlayerFromAllGroups(playerName);
+            players.available.push(playerName);
+            updateAllDisplays();
+        },
+        resetDraggedElement
+    );
+}
+
+function handleDropToLeader(playerName, teamNumber) {
+    // Check if we're in team setup mode
+    const setupLeaderContainer = document.getElementById(`team${teamNumber}-leader-container`);
+
+    if (setupLeaderContainer) {
+        // Team setup mode - handle DOM-based drag and drop
+        handleTeamSetupDropToLeader(playerName, teamNumber);
+        return;
+    }
+
+    // Original game mode logic
+    const teamKey = `team${teamNumber}`;
+    const currentLeader = players[`${teamKey}Leader`];
+
+    if (currentLeader === playerName) {
+        resetDraggedElement();
+        return;
+    }
+
+    if (currentLeader) {
+        showConfirmationDialog(
+            `Replace ${currentLeader} as Team ${teamNumber} leader with ${playerName}?`,
+            () => {
+                removePlayerFromAllGroups(playerName);
+                removePlayerFromAllGroups(currentLeader);
+
+                players[`${teamKey}Leader`] = playerName;
+                players.available.push(currentLeader);
+                updateAllDisplays();
+            },
+            resetDraggedElement
+        );
+    } else {
+        if (getTeamSize(teamNumber) >= maxTeamSize) {
+            showErrorModal(`Team ${teamNumber} is full!`);
+            resetDraggedElement();
+            return;
+        }
+
+        showConfirmationDialog(
+            `Make ${playerName} the leader of Team ${teamNumber}?`,
+            () => {
+                removePlayerFromAllGroups(playerName);
+                players[`${teamKey}Leader`] = playerName;
+                updateAllDisplays();
+            },
+            resetDraggedElement
+        );
+    }
+}
+
+function handleDropToTeam(playerName, teamNumber) {
+    // Check if we're in team setup mode
+    const setupPlayersContainer = document.getElementById(`team${teamNumber}-players-setup`);
+
+    if (setupPlayersContainer) {
+        // Team setup mode - handle DOM-based drag and drop
+        handleTeamSetupDropToTeam(playerName, teamNumber);
+        return;
+    }
+
+    // Original game mode logic
+    const teamKey = `team${teamNumber}`;
+    const currentLocation = getPlayerLocation(playerName);
+
+    if (currentLocation === teamKey) {
+        resetDraggedElement();
+        return;
+    }
+
+    if (getTeamSize(teamNumber) >= maxTeamSize) {
+        showErrorModal(`Team ${teamNumber} is full!`);
+        resetDraggedElement();
+        return;
+    }
+
+    showConfirmationDialog(
+        `Move ${playerName} to Team ${teamNumber}?`,
+        () => {
+            removePlayerFromAllGroups(playerName);
+            players[teamKey].push(playerName);
+            updateAllDisplays();
+        },
+        resetDraggedElement
+    );
+}
+
+function getTeamNumberFromElement(element) {
+    const teamElement = element.closest('.team');
+    return teamElement ? parseInt(teamElement.id.replace('team', '')) : null;
+}
+
+function getPlayerLocation(playerName) {
+    if (players.available.includes(playerName)) return 'available';
+    if (players.team1.includes(playerName) || players.team1Leader === playerName) return 'team1';
+    if (players.team2.includes(playerName) || players.team2Leader === playerName) return 'team2';
+    return null;
+}
+
+function getTeamSize(teamNumber) {
+    const teamKey = `team${teamNumber}`;
+
+    // Check if we're in team setup mode (using DOM elements)
+    const setupLeaderContainer = document.getElementById(`team${teamNumber}-leader-container`);
+    const setupPlayersContainer = document.getElementById(`team${teamNumber}-players-setup`);
+
+    if (setupLeaderContainer && setupPlayersContainer) {
+        // Team setup mode - count DOM elements
+        const leaderCount = setupLeaderContainer.children.length;
+        const playersCount = setupPlayersContainer.children.length;
+        return leaderCount + playersCount;
+    } else {
+        // Game mode - use players object
+        const leaderCount = players[`${teamKey}Leader`] ? 1 : 0;
+        const playersCount = players[teamKey] ? players[teamKey].length : 0;
+        return playersCount + leaderCount;
+    }
+}
+
+function clearDropZoneHighlights() {
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+
+function resetDraggedElement() {
+    if (dragState.element && dragState.originalParent) {
+        const children = Array.from(dragState.originalParent.children);
+        if (dragState.originalIndex < children.length) {
+            dragState.originalParent.insertBefore(dragState.element, children[dragState.originalIndex]);
+        } else {
+            dragState.originalParent.appendChild(dragState.element);
+        }
+    }
+
+    dragState.element = null;
+    dragState.originalParent = null;
+    dragState.originalIndex = null;
 }
 
 function showConfirmationDialog(message, onConfirmCallback, onCancelCallback = resetDraggedItem) {
@@ -484,217 +579,257 @@ function confirmSwitch(confirm) {
     }, 300);
 }
 
-function handleTeamDrop(event, teamNumber, isLeaderSlot) {
-    event.preventDefault();
-    if (gameStarted) return false;
+// --- Simplified Mobile Touch Drag and Drop ---
+function addTouchSupport(element) {
+    let touchState = {
+        startX: 0,
+        startY: 0,
+        isDragging: false,
+        dragThreshold: 15,
+        longPressTimer: null,
+        longPressDelay: 300
+    };
 
-    const playerName = event.dataTransfer.getData("text/plain");
-    if (!playerName) {
-        console.error("No player name found in drag data during handleTeamDrop");
-        return false;
-    }
+    element.addEventListener('touchstart', (e) => {
+        if (gameStarted) return;
+        e.preventDefault();
 
-    const team = `team${teamNumber}`;
+        const touch = e.touches[0];
+        touchState.startX = touch.clientX;
+        touchState.startY = touch.clientY;
+        touchState.isDragging = false;
 
-    // --- Leader Slot Logic ---
-    if (isLeaderSlot) {
-        const existingLeader = teamNumber === 1 ? players.team1Leader : players.team2Leader;
+        // Visual feedback for long press
+        element.classList.add('long-press-active');
 
-        if (existingLeader === playerName) {
-            showErrorModal("Cannot switch a player with themselves!");
-            return false;
-        }
+        // Start long press timer
+        touchState.longPressTimer = setTimeout(() => {
+            touchState.isDragging = true;
+            startTouchDrag(element, touch);
+        }, touchState.longPressDelay);
 
-        if (existingLeader) {
-            showConfirmationDialog(
-                `Switch positions between ${existingLeader} (Leader) and ${playerName}?`,
-                () => {
-                    const currentTeamOfPlayer = getPlayerCurrentTeam(playerName);
-                    removePlayerFromAllGroups(playerName);
-                    removePlayerFromAllGroups(existingLeader);
+    }, { passive: false });
 
-                    if (teamNumber === 1) players.team1Leader = playerName;
-                    else players.team2Leader = playerName;
+    element.addEventListener('touchmove', (e) => {
+        if (gameStarted) return;
+        e.preventDefault();
 
-                    if (currentTeamOfPlayer === 1) players.team1.push(existingLeader);
-                    else if (currentTeamOfPlayer === 2) players.team2.push(existingLeader);
-                    else players.available.push(existingLeader);
+        const touch = e.touches[0];
+        const deltaX = Math.abs(touch.clientX - touchState.startX);
+        const deltaY = Math.abs(touch.clientY - touchState.startY);
 
-                    updateTeamPlayersDisplay();
-                    updateAvailablePlayersDisplay();
-                },
-                () => {
-                    resetDraggedItem();
-                }
-            );
-            return true;
-        } else {
-            if (players[team].length + (players[`team${teamNumber}Leader`] ? 0 : 1) > maxTeamSize) {
-                showErrorModal(`Team ${teamNumber} is already full (max ${maxTeamSize} players)!`);
-                return false;
+        // Cancel long press if moved too much before drag starts
+        if (!touchState.isDragging && (deltaX > touchState.dragThreshold || deltaY > touchState.dragThreshold)) {
+            if (touchState.longPressTimer) {
+                clearTimeout(touchState.longPressTimer);
+                touchState.longPressTimer = null;
+                element.classList.remove('long-press-active');
             }
-            showConfirmationDialog(
-                `Make ${playerName} the leader of Team ${teamNumber}?`,
-                () => {
-                    removePlayerFromAllGroups(playerName);
-                    if (teamNumber === 1) players.team1Leader = playerName;
-                    else players.team2Leader = playerName;
-                    updateTeamPlayersDisplay();
-                    updateAvailablePlayersDisplay();
-                },
-                () => {
-                    resetDraggedItem();
-                }
-            );
-            return true;
-        }
-    } else {
-        if (players[team].length + (players[`team${teamNumber}Leader`] ? 1 : 0) >= maxTeamSize) {
-            showErrorModal(`Team ${teamNumber} is already full (max ${maxTeamSize} players)!`);
-            return false;
+            return;
         }
 
-        const sourceTeam = getPlayerCurrentTeam(playerName);
-        const sourceIsAvailable = players.available.includes(playerName);
-
-        if (
-            (sourceTeam === teamNumber && !isLeaderSlot) ||
-            (sourceIsAvailable && event.target.closest('#available-players')) ||
-            (sourceTeam === 1 && players.team1Leader === playerName && isLeaderSlot && teamNumber === 1) ||
-            (sourceTeam === 2 && players.team2Leader === playerName && isLeaderSlot && teamNumber === 2)
-        ) {
-            return false;
+        // Update drag position if dragging
+        if (touchState.isDragging && dragState.isDragging) {
+            updateTouchDragPosition(element, touch);
+            updateTouchDropZoneHighlight(touch);
         }
 
-        if (sourceTeam !== null || sourceIsAvailable) {
-            showConfirmationDialog(
-                `Move ${playerName} to Team ${teamNumber}?`,
-                () => {
-                    removePlayerFromAllGroups(playerName);
-                    players[team].push(playerName);
-                    updateTeamPlayersDisplay();
-                    updateAvailablePlayersDisplay();
-                },
-                () => {
-                    resetDraggedItem();
-                }
-            );
-            return true;
-        } else {
-            console.warn(`Player ${playerName} not found in any list during drop.`);
-            return false;
+    }, { passive: false });
+
+    element.addEventListener('touchend', (e) => {
+        if (gameStarted) return;
+        e.preventDefault();
+
+        // Clear timers and visual feedback
+        if (touchState.longPressTimer) {
+            clearTimeout(touchState.longPressTimer);
+            touchState.longPressTimer = null;
         }
+        element.classList.remove('long-press-active');
+
+        // Handle drag end
+        if (touchState.isDragging && dragState.isDragging) {
+            const touch = e.changedTouches[0];
+            endTouchDrag(element, touch);
+        }
+
+        touchState.isDragging = false;
+
+    }, { passive: false });
+
+    element.addEventListener('touchcancel', (e) => {
+        // Clean up everything
+        if (touchState.longPressTimer) {
+            clearTimeout(touchState.longPressTimer);
+            touchState.longPressTimer = null;
+        }
+        element.classList.remove('long-press-active');
+
+        if (touchState.isDragging && dragState.isDragging) {
+            cancelTouchDrag(element);
+        }
+
+        touchState.isDragging = false;
+    });
+}
+
+function startTouchDrag(element, touch) {
+    dragState.element = element;
+    dragState.originalParent = element.parentNode;
+    dragState.originalIndex = Array.from(dragState.originalParent.children).indexOf(element);
+    dragState.isDragging = true;
+
+    // Create a visual clone for dragging instead of moving the original
+    const clone = element.cloneNode(true);
+    clone.classList.add('dragging');
+    clone.style.position = 'fixed';
+    clone.style.zIndex = '9999';
+    clone.style.pointerEvents = 'none';
+    clone.style.width = element.offsetWidth + 'px';
+    clone.style.height = element.offsetHeight + 'px';
+
+    // Calculate initial position
+    const rect = element.getBoundingClientRect();
+    clone.style.left = rect.left + 'px';
+    clone.style.top = rect.top + 'px';
+
+    // Store offset from touch point to element center
+    const offsetX = touch.clientX - (rect.left + rect.width / 2);
+    const offsetY = touch.clientY - (rect.top + rect.height / 2);
+    clone._touchOffset = { x: offsetX, y: offsetY };
+
+    // Hide original and add clone to body
+    element.style.opacity = '0.3';
+    document.body.appendChild(clone);
+    dragState.dragClone = clone;
+
+    // Add haptic feedback if available
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
     }
 }
 
-// --- Touch Drag-and-Drop Handlers ---
+function updateTouchDragPosition(element, touch) {
+    const clone = dragState.dragClone;
+    if (!clone || !clone._touchOffset) return;
+
+    // Center the clone on the touch point
+    const x = touch.clientX - clone.offsetWidth / 2;
+    const y = touch.clientY - clone.offsetHeight / 2;
+
+    clone.style.left = x + 'px';
+    clone.style.top = y + 'px';
+}
+
+function updateTouchDropZoneHighlight(touch) {
+    // Clear previous highlights
+    clearDropZoneHighlights();
+
+    // Find element under touch point
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!elementBelow) return;
+
+    // Find valid drop zone - include team setup specific zones
+    const dropZone = elementBelow.closest('.players-list, .leader-slot, #available-players, #available-players-setup, #team1-players-setup, #team2-players-setup, #team1-leader-container, #team2-leader-container');
+    if (dropZone && dropZone !== dragState.originalParent) {
+        dropZone.classList.add('drag-over');
+    }
+}
+
+function endTouchDrag(element, touch) {
+    // Find drop target - include team setup specific zones
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropZone = elementBelow?.closest('.players-list, .leader-slot, #available-players, #available-players-setup, #team1-players-setup, #team2-players-setup, #team1-leader-container, #team2-leader-container');
+
+    // Clean up
+    cleanupTouchDrag(element);
+    clearDropZoneHighlights();
+
+    // Handle drop
+    if (dropZone && dropZone !== dragState.originalParent) {
+        const playerName = element.textContent;
+
+        // Team setup specific zones
+        if (dropZone.id === 'available-players-setup') {
+            handleDropToAvailable(playerName);
+        } else if (dropZone.id === 'team1-leader-container' || dropZone.id === 'team2-leader-container') {
+            const teamNumber = dropZone.id.includes('team1') ? 1 : 2;
+            handleDropToLeader(playerName, teamNumber);
+        } else if (dropZone.id === 'team1-players-setup' || dropZone.id === 'team2-players-setup') {
+            const teamNumber = dropZone.id.includes('team1') ? 1 : 2;
+            handleDropToTeam(playerName, teamNumber);
+        }
+        // Original game zones
+        else if (dropZone.id === 'available-players') {
+            handleDropToAvailable(playerName);
+        } else if (dropZone.classList.contains('leader-slot')) {
+            const teamNumber = getTeamNumberFromElement(dropZone);
+            handleDropToLeader(playerName, teamNumber);
+        } else if (dropZone.classList.contains('players-list') && dropZone.closest('.team')) {
+            const teamNumber = getTeamNumberFromElement(dropZone);
+            handleDropToTeam(playerName, teamNumber);
+        }
+    } else {
+        // No valid drop zone, return to original position
+        resetDraggedElement();
+    }
+
+    dragState.isDragging = false;
+}
+
+function cancelTouchDrag(element) {
+    cleanupTouchDrag(element);
+    clearDropZoneHighlights();
+    resetDraggedElement();
+    dragState.isDragging = false;
+}
+
+function cleanupTouchDrag(element) {
+    // Restore original element
+    element.style.opacity = '';
+    element.classList.remove('dragging');
+
+    // Remove drag clone
+    if (dragState.dragClone) {
+        dragState.dragClone.remove();
+        dragState.dragClone = null;
+    }
+}
 
 function createPlayerElement(playerName, isLeader = false) {
     const playerElement = document.createElement('div');
     playerElement.className = isLeader ? 'player leader locked' : 'player';
-    playerElement.draggable = !isLeader;
     playerElement.textContent = playerName;
+    playerElement.dataset.playerName = playerName;
 
     if (!isLeader) {
-        playerElement.addEventListener('touchstart', handleTouchStart, { passive: false });
-        playerElement.addEventListener('touchmove', handleTouchMove, { passive: false });
-        playerElement.addEventListener('touchend', function(e) {
-            if (!draggedItem || gameStarted) return;
-            e.preventDefault();
-
-            removeDropTargetHighlight();
-
-            const touch = e.changedTouches[0];
-            const dropTargetElement = document.elementFromPoint(touch.clientX, touch.clientY);
-
-            let droppedInValidZone = false;
-            let requiresConfirmation = false;
-
-            if (dropTargetElement) {
-                const teamContainer = dropTargetElement.closest('.team');
-                const leaderSlot = dropTargetElement.closest('.leader-slot');
-                const playersList = dropTargetElement.closest('.players-list');
-                const availablePlayersContainer = dropTargetElement.closest('#available-players');
-
-                if ((leaderSlot || playersList) && !(playersList === originalParent || leaderSlot === originalParent)) {
-                    const targetTeamNumber = teamContainer
-                        ? parseInt(teamContainer.id.replace('team', ''))
-                        : (leaderSlot ? parseInt(leaderSlot.closest('.team').id.replace('team', '')) : null);
-
-                    if (targetTeamNumber) {
-                        droppedInValidZone = true;
-                        const simulatedEvent = {
-                            preventDefault: () => {},
-                            dataTransfer: {
-                                getData: (format) => (format === "text/plain" ? draggedItem.textContent : null)
-                            },
-                            target: dropTargetElement
-                        };
-                        requiresConfirmation = handleTeamDrop(simulatedEvent, targetTeamNumber, !!leaderSlot);
-                    }
-                } else if (availablePlayersContainer && originalParent !== availablePlayersContainer) {
-                    droppedInValidZone = true;
-                    const sourceTeam = getPlayerCurrentTeam(draggedItem.textContent);
-                    if (sourceTeam) {
-                        requiresConfirmation = true;
-                        showConfirmationDialog(
-                            `Move ${draggedItem.textContent} back to Available Players?`,
-                            () => {
-                                removePlayerFromAllGroups(draggedItem.textContent);
-                                players.available.push(draggedItem.textContent);
-                                updateTeamPlayersDisplay();
-                                updateAvailablePlayersDisplay();
-                            },
-                            () => {
-                                resetDraggedItem();
-                            }
-                        );
-                    } else {
-                        droppedInValidZone = false;
-                        requiresConfirmation = false;
-                    }
-                }
-            }
-
-            if (!droppedInValidZone || (droppedInValidZone && !requiresConfirmation)) {
-                resetDraggedItem();
-            }
-        }, { passive: false });
-
-        playerElement.addEventListener('dragstart', drag);
-    }
-
-    if (isLeader) {
-        playerElement.classList.add('locked');
+        if (isMobileDevice()) {
+            // Mobile: Use touch drag with tap fallback
+            addTouchSupport(playerElement);
+            addSimpleTouchFallback(playerElement);
+        } else {
+            // Desktop: Use HTML5 drag and drop
+            playerElement.draggable = true;
+            playerElement.addEventListener('dragstart', handleDragStart);
+            playerElement.addEventListener('dragend', handleDragEnd);
+        }
     }
 
     return playerElement;
 }
 
-function resetDraggedItem() {
-    if (draggedItem && originalParent) {
-        if (originalNextSibling && originalNextSibling.parentNode === originalParent) {
-            originalParent.insertBefore(draggedItem, originalNextSibling);
-        } else {
-            originalParent.appendChild(draggedItem);
-        }
-    }
-    if (draggedItem) {
-        draggedItem.style.position = '';
-        draggedItem.style.left = '';
-        draggedItem.style.top = '';
-        draggedItem.style.zIndex = '';
-        draggedItem.style.transform = ''; // *** Clear the transform ***
-        draggedItem.classList.remove('dragging');
-    }
-    draggedItem = null;
-    originalParent = null;
-    originalNextSibling = null;
-    removeDropTargetHighlight();
+// Helper function to detect mobile devices
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        ('ontouchstart' in window) ||
+        (navigator.maxTouchPoints > 0);
 }
 
-function removeDropTargetHighlight() {
-    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+// Helper function to update all displays
+function updateAllDisplays() {
+    updateAvailablePlayersDisplay();
+    updateTeamPlayersDisplay();
+    updatePlayerDropdowns();
 }
 
 // --- Game Logic ---
@@ -728,8 +863,11 @@ async function startGame() {
         const toggleButton = document.getElementById('toggle-word-btn');
         if (wordElement) {
             wordElement.textContent = currentWord;
-            wordElement.style.backgroundColor = 'transparent';
+            wordElement.style.filter = 'none';
+            wordElement.style.backgroundColor = 'var(--tertiary-bg)';
             wordElement.style.color = 'var(--text-color-light)';
+            wordElement.style.border = '1px solid var(--border-color)';
+            wordElement.classList.remove('word-hidden');
             isWordVisible = true;
             if (toggleButton) toggleButton.textContent = 'Hide Word';
         }
@@ -743,8 +881,11 @@ async function startGame() {
         generateWordButton.disabled = true;
     }
 
-    document.getElementById('start-btn').style.display = 'none';
-    document.getElementById('referee-controls').style.display = 'block';
+    // Hide setup screens and show game container
+    document.querySelectorAll('.setup-screen').forEach(screen => {
+        screen.style.display = 'none';
+    });
+    document.getElementById('game-container').style.display = 'block';
 
     currentTeam = 1;
     currentRound = 0;
@@ -761,11 +902,16 @@ async function startGame() {
     highlightCurrentTeam();
     updateActiveTeamLog();
 
-    // Hide setup sections, show game controls
-    document.querySelector('.game-setup').style.display = 'none';
-    document.querySelector('.setup-section').style.display = 'none';
-    document.querySelector('.game-controls').style.display = 'block';
-    document.querySelector('.word-section').style.display = 'block';
+    // Update game screen word display
+    const gameWordElement = document.getElementById('game-current-word');
+    if (gameWordElement && currentWord) {
+        gameWordElement.textContent = currentWord;
+        gameWordElement.style.filter = 'none';
+        gameWordElement.style.backgroundColor = 'var(--tertiary-bg)';
+        gameWordElement.style.color = 'var(--text-color-light)';
+        gameWordElement.style.border = '1px solid var(--border-color)';
+        gameWordElement.classList.remove('word-hidden');
+    }
 
     console.log("Game started successfully with word:", currentWord);
 }
@@ -774,36 +920,98 @@ async function generateNewWord() {
     try {
         currentWord = await fetchRandomWord();
         const wordElement = document.getElementById('current-word');
+        const gameWordElement = document.getElementById('game-current-word');
         const toggleButton = document.getElementById('toggle-word-btn');
-        
+
         if (wordElement && currentWord) {
+            // Always show the word when generating a new one
             wordElement.textContent = currentWord;
-            isWordVisible = true;
-            wordElement.style.backgroundColor = 'transparent';
+            wordElement.style.filter = 'none';
+            wordElement.style.backgroundColor = 'var(--tertiary-bg)';
             wordElement.style.color = 'var(--text-color-light)';
-            toggleButton.textContent = 'Hide Word';
+            wordElement.style.border = '1px solid var(--border-color)';
+            wordElement.classList.remove('word-hidden');
+            isWordVisible = true;
+
+            if (toggleButton) {
+                toggleButton.textContent = 'Hide Word';
+            }
+        }
+
+        // Also update game screen word if it exists
+        if (gameWordElement && currentWord) {
+            gameWordElement.textContent = currentWord;
+            gameWordElement.style.filter = 'none';
+            gameWordElement.style.backgroundColor = 'var(--tertiary-bg)';
+            gameWordElement.style.color = 'var(--text-color-light)';
+            gameWordElement.style.border = '1px solid var(--border-color)';
+            gameWordElement.classList.remove('word-hidden');
         }
     } catch (error) {
         console.error('Error generating word:', error);
     }
 }
 
+// Function for generating new word during game
+async function generateNewGameWord() {
+    await generateNewWord();
+}
+
 function toggleWordVisibility() {
     if (!currentWord) return;
-    
+
     const wordElement = document.getElementById('current-word');
+    const gameWordElement = document.getElementById('game-current-word');
     const toggleButton = document.getElementById('toggle-word-btn');
-    
+    const gameToggleButton = document.getElementById('game-toggle-word-btn');
+
     isWordVisible = !isWordVisible;
     
-    if (isWordVisible) {
-        wordElement.style.backgroundColor = 'transparent';
-        wordElement.style.color = 'var(--text-color-light)';
-        toggleButton.textContent = 'Hide Word';
-    } else {
-        wordElement.style.backgroundColor = '#000';
-        wordElement.style.color = '#000';
-        toggleButton.textContent = 'Show Word';
+    // Add haptic feedback for mobile
+    if (navigator.vibrate && isMobileDevice()) {
+        navigator.vibrate(50);
+    }
+
+    // Update word generation screen word
+    if (wordElement && toggleButton) {
+        if (isWordVisible) {
+            wordElement.textContent = currentWord;
+            wordElement.style.filter = 'none';
+            wordElement.style.backgroundColor = 'var(--tertiary-bg)';
+            wordElement.style.color = 'var(--text-color-light)';
+            wordElement.style.border = '1px solid var(--border-color)';
+            wordElement.classList.remove('word-hidden');
+            toggleButton.textContent = 'Hide Word';
+        } else {
+            wordElement.textContent = currentWord;
+            wordElement.style.filter = 'blur(10px)';
+            wordElement.style.backgroundColor = 'var(--primary-bg)';
+            wordElement.style.color = 'var(--text-color-light)';
+            wordElement.style.border = '1px solid var(--border-color)';
+            wordElement.classList.add('word-hidden');
+            toggleButton.textContent = 'Show Word';
+        }
+    }
+
+    // Update game screen word
+    if (gameWordElement && gameToggleButton) {
+        if (isWordVisible) {
+            gameWordElement.textContent = currentWord;
+            gameWordElement.style.filter = 'none';
+            gameWordElement.style.backgroundColor = 'var(--tertiary-bg)';
+            gameWordElement.style.color = 'var(--text-color-light)';
+            gameWordElement.style.border = '1px solid var(--border-color)';
+            gameWordElement.classList.remove('word-hidden');
+            gameToggleButton.textContent = 'Hide Word';
+        } else {
+            gameWordElement.textContent = currentWord;
+            gameWordElement.style.filter = 'blur(10px)';
+            gameWordElement.style.backgroundColor = 'var(--primary-bg)';
+            gameWordElement.style.color = 'var(--text-color-light)';
+            gameWordElement.style.border = '1px solid var(--border-color)';
+            gameWordElement.classList.add('word-hidden');
+            gameToggleButton.textContent = 'Show Word';
+        }
     }
 }
 
@@ -855,7 +1063,7 @@ function updateActiveTeamLog() {
     if (activeTeamLog) {
         activeTeamLog.style.display = 'block';
         activeTeamLog.classList.add('active');
-        
+
         console.log(`Switching to Team ${currentTeam}'s log`);
     }
 }
@@ -886,18 +1094,18 @@ function logWord(teamNumber) {
     const wordDisplay = document.getElementById(`team${teamNumber}-word-display`);
     const logEntry = document.createElement('div');
     logEntry.className = 'log-entry';
-    
+
     const messageSpan = document.createElement('span');
     messageSpan.className = 'message';
     messageSpan.textContent = `${playerName}: ${word}`;
-    
+
     const timeSpan = document.createElement('span');
     timeSpan.className = 'timestamp';
     timeSpan.textContent = formatTime(new Date());
-    
+
     logEntry.appendChild(messageSpan);
     logEntry.appendChild(timeSpan);
-    
+
     wordDisplay.appendChild(logEntry);
     wordLogInput.value = '';
 
@@ -917,11 +1125,11 @@ function formatTime(date) {
     let hours = date.getHours();
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
-    
+
     hours = hours % 12;
     hours = hours ? hours : 12;
     hours = String(hours).padStart(2, '0');
-    
+
     return `${hours}:${minutes} ${ampm}`;
 }
 
@@ -934,7 +1142,7 @@ async function endRound() {
     const victoryMessage = `
         Team ${currentTeam} Wins Round ${currentRound + 1}!
     `;
-    
+
     showErrorModal(victoryMessage, true);
     currentRound++;
 
@@ -959,7 +1167,11 @@ async function endRound() {
 function endGame() {
     document.getElementById('results').style.display = 'block';
     document.getElementById('results').classList.add('show');
-    document.getElementById('referee-controls').style.display = 'none';
+    // Hide game controls when showing results
+    const gameScreen = document.querySelector('.game-screen');
+    if (gameScreen) {
+        gameScreen.style.display = 'none';
+    }
 
     const correctGuesses = gameLog.filter(entry => entry.type === 'correct-guess');
     document.getElementById('guess-results').innerHTML = correctGuesses.map(guess => `
@@ -1008,9 +1220,9 @@ function isEffectiveHint(word) {
     const cleanPassword = currentWord.replace(/[^A-Z]/g, '');
 
     return cleanWord === cleanPassword ||
-           cleanPassword.includes(cleanWord) ||
-           cleanWord.includes(cleanPassword) ||
-           calculateSimilarity(cleanWord, cleanPassword) > 0.4;
+        cleanPassword.includes(cleanWord) ||
+        cleanWord.includes(cleanPassword) ||
+        calculateSimilarity(cleanWord, cleanPassword) > 0.4;
 }
 
 function calculateSimilarity(a, b) {
@@ -1034,65 +1246,177 @@ function calculateSimilarity(a, b) {
     return 1 - (matrix[a.length][b.length] / longer.length);
 }
 
-// --- Screen Transitions and Difficulty Selection ---
+// --- Modern Screen Transition System ---
+let currentScreen = 0;
+const screens = ['player-select-screen', 'difficulty-select-screen', 'round-select-screen', 'team-setup-screen', 'word-generation-screen'];
 let selectedPlayerCount = 0;
+
+function transitionToScreen(fromScreenId, toScreenId, direction = 'right') {
+    const fromScreen = document.getElementById(fromScreenId);
+    const toScreen = document.getElementById(toScreenId);
+
+    if (!fromScreen || !toScreen) {
+        console.error('Screen not found:', fromScreenId, toScreenId);
+        return;
+    }
+
+    console.log('Transitioning from', fromScreenId, 'to', toScreenId);
+
+    // Update progress indicator
+    updateProgressIndicator(toScreenId);
+
+    // Hide current screen immediately
+    fromScreen.classList.remove('active');
+    fromScreen.style.display = 'none';
+
+    // Show next screen immediately
+    toScreen.style.display = 'flex';
+    toScreen.style.opacity = '1';
+    toScreen.style.transform = 'translateX(0)';
+    toScreen.classList.add('active');
+
+    // Ensure all content is visible
+    const content = toScreen.querySelector('.card-content');
+    const buttons = toScreen.querySelectorAll('.btn');
+    const h2 = toScreen.querySelector('h2');
+    const optionsGrid = toScreen.querySelector('.options-grid');
+
+    console.log('Content found:', !!content);
+    console.log('Buttons found:', buttons.length);
+    console.log('H2 found:', !!h2);
+    console.log('Options grid found:', !!optionsGrid);
+
+    if (content) {
+        content.style.opacity = '1';
+        content.style.transform = 'translateY(0)';
+        content.style.display = 'block';
+        content.style.visibility = 'visible';
+    }
+
+    if (h2) {
+        h2.style.opacity = '1';
+        h2.style.visibility = 'visible';
+    }
+
+    if (optionsGrid) {
+        optionsGrid.style.opacity = '1';
+        optionsGrid.style.visibility = 'visible';
+        optionsGrid.style.display = 'flex';
+    }
+
+    buttons.forEach((btn, index) => {
+        btn.style.opacity = '1';
+        btn.style.transform = 'translateY(0)';
+        btn.style.display = 'inline-block';
+        btn.style.visibility = 'visible';
+        console.log(`Button ${index}:`, btn.textContent);
+    });
+
+    console.log('Transition completed to', toScreenId);
+
+    // Initialize specific screens
+    if (toScreenId === 'team-setup-screen') {
+        initializeTeamSetup();
+    }
+}
+
+function triggerContentAnimations(screen) {
+    console.log('Triggering animations for screen:', screen.id);
+    const buttons = screen.querySelectorAll('.btn');
+    const content = screen.querySelector('.card-content');
+
+    console.log('Found content:', !!content, 'Found buttons:', buttons.length);
+
+    if (content) {
+        content.style.transform = 'translateY(30px)';
+        content.style.opacity = '0';
+
+        setTimeout(() => {
+            content.style.transform = 'translateY(0)';
+            content.style.opacity = '1';
+            console.log('Content animation triggered');
+        }, 100);
+    }
+
+    buttons.forEach((btn, index) => {
+        btn.style.transform = 'translateY(20px)';
+        btn.style.opacity = '0';
+
+        setTimeout(() => {
+            btn.style.transform = 'translateY(0)';
+            btn.style.opacity = '1';
+            console.log('Button', index, 'animation triggered');
+        }, 200 + (index * 100));
+    });
+}
+
+function updateProgressIndicator(targetScreenId) {
+    // Create progress indicator if it doesn't exist
+    if (!document.querySelector('.setup-progress')) {
+        createProgressIndicator();
+    }
+
+    const dots = document.querySelectorAll('.progress-dot');
+    const targetIndex = screens.indexOf(targetScreenId);
+
+    dots.forEach((dot, index) => {
+        dot.classList.remove('active', 'completed');
+        if (index < targetIndex) {
+            dot.classList.add('completed');
+        } else if (index === targetIndex) {
+            dot.classList.add('active');
+        }
+    });
+}
+
+function createProgressIndicator() {
+    const progressContainer = document.createElement('div');
+    progressContainer.className = 'setup-progress';
+
+    screens.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.className = 'progress-dot';
+        if (index === 0) dot.classList.add('active');
+        progressContainer.appendChild(dot);
+    });
+
+    document.body.appendChild(progressContainer);
+}
 
 function selectPlayerCount(playerCount) {
     numberOfPlayers = playerCount;
-    const playerSelectScreen = document.getElementById('player-select-screen');
-    const difficultySelectScreen = document.getElementById('difficulty-select-screen');
-    
-    playerSelectScreen.style.opacity = '0';
-    playerSelectScreen.style.visibility = 'hidden';
-    
-    setTimeout(() => {
-        difficultySelectScreen.classList.add('active');
-    }, 500);
+    transitionToScreen('player-select-screen', 'difficulty-select-screen');
 }
 
 function selectRounds(rounds) {
     totalRounds = rounds;
-    // Update the round input field visually (optional)
-    const roundsInput = document.getElementById('rounds');
-    if (roundsInput) roundsInput.value = rounds;
-
-    const roundScreen = document.getElementById('round-select-screen');
-    const gameContainer = document.getElementById('game-container');
-
-    roundScreen.style.opacity = '0';
-    roundScreen.style.visibility = 'hidden';
-    roundScreen.style.display = 'none';
-
-    setTimeout(() => {
-        gameContainer.style.opacity = '1';
-        gameContainer.style.visibility = 'visible';
-        gameContainer.style.display = 'block';
-
-        document.querySelector('.game-setup').style.display = 'block';
-        document.querySelector('.setup-section').style.display = 'block';
-        document.querySelector('.game-controls').style.display = 'block';
-
-        // --- Generate the INITIAL word when this screen appears ---
-        if (!currentWord) {
-            generateNewWord();
-        }
-        // -----------------------------------------------------------
-    }, 300);
+    transitionToScreen('round-select-screen', 'team-setup-screen');
 }
 
 function selectDifficulty(difficulty) {
+    console.log('Difficulty selected:', difficulty);
     gameDifficulty = difficulty;
-    const difficultyScreen = document.getElementById('difficulty-select-screen');
-    const roundScreen = document.getElementById('round-select-screen');
 
-    difficultyScreen.style.opacity = '0';
-    difficultyScreen.style.visibility = 'hidden';
+    // Add visual feedback for selected difficulty
+    const selectedBtn = event.target;
+    if (selectedBtn) {
+        selectedBtn.style.transform = 'scale(0.95)';
+        selectedBtn.style.background = 'var(--text-color-light)';
+        selectedBtn.style.color = 'var(--primary-bg)';
+    }
 
     setTimeout(() => {
-        roundScreen.style.opacity = '1';
-        roundScreen.style.visibility = 'visible';
-        roundScreen.style.display = 'flex';
-    }, 300);
+        console.log('Starting transition to round screen');
+
+        // Debug: Check if round screen exists and has content
+        const roundScreen = document.getElementById('round-select-screen');
+        console.log('Round screen found:', !!roundScreen);
+        if (roundScreen) {
+            console.log('Round screen content:', roundScreen.innerHTML.substring(0, 200));
+        }
+
+        transitionToScreen('difficulty-select-screen', 'round-select-screen');
+    }, 200);
 }
 
 // --- Initialization ---
@@ -1115,20 +1439,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirmPlayerCountBtn && playerSelectScreen && playerSlider) {
         confirmPlayerCountBtn.addEventListener('click', () => {
             numberOfPlayers = parseInt(playerSlider.value);
-            maxTeamSize = Math.ceil(numberOfPlayers / 2); // <-- ADD THIS LINE
+            maxTeamSize = Math.ceil(numberOfPlayers / 2);
             teamsConfig.team1.maxPlayers = maxTeamSize;
             teamsConfig.team2.maxPlayers = maxTeamSize;
-            console.log("Number of players confirmed:", numberOfPlayers);
 
-            // Example modification in your script.js
-            // Inside confirmPlayerCountBtn click listener:
-            playerSelectScreen.classList.remove('active'); // Hide current
+            // Add button feedback
+            confirmPlayerCountBtn.style.transform = 'scale(0.95)';
+            confirmPlayerCountBtn.style.background = 'var(--text-color-light)';
+            confirmPlayerCountBtn.style.color = 'var(--primary-bg)';
 
-            // Show next screen
-            const difficultySelectScreen = document.getElementById('difficulty-select-screen');
-            if (difficultySelectScreen) {
-                difficultySelectScreen.classList.add('active');
-            }
+            setTimeout(() => {
+                transitionToScreen('player-select-screen', 'difficulty-select-screen');
+            }, 200);
         });
     }
 
@@ -1137,17 +1459,83 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initially hide it if it's not the first screen.
     }
 
-    document.getElementById('player-select-screen').style.opacity = '1';
-    document.getElementById('player-select-screen').style.visibility = 'visible';
-    document.getElementById('difficulty-select-screen').classList.remove('active');
-    
+    // Initialize setup screens
+    const playerScreen = document.getElementById('player-select-screen');
+    const difficultyScreen = document.getElementById('difficulty-select-screen');
+    const roundScreen = document.getElementById('round-select-screen');
+    const teamScreen = document.getElementById('team-setup-screen');
+    const wordScreen = document.getElementById('word-generation-screen');
+
+    // Make sure only the first screen is active
+    playerScreen.classList.add('active');
+    playerScreen.style.display = 'flex';
+    playerScreen.style.transform = 'translateX(0)';
+    playerScreen.style.opacity = '1';
+
+    [difficultyScreen, roundScreen, teamScreen, wordScreen].forEach(screen => {
+        if (screen) {
+            screen.classList.remove('active');
+            screen.style.display = 'none';
+        }
+    });
+
+    // Setup round slider
+    const roundSlider = document.getElementById('round-slider-input');
+    const roundSliderValue = document.getElementById('round-slider-value');
+
+    if (roundSlider && roundSliderValue) {
+        roundSliderValue.textContent = roundSlider.value;
+        roundSlider.addEventListener('input', () => {
+            roundSliderValue.textContent = roundSlider.value;
+        });
+    }
+
+    // Setup round confirmation
+    const confirmRoundBtn = document.getElementById('confirm-round-count-btn');
+    if (confirmRoundBtn) {
+        confirmRoundBtn.addEventListener('click', () => {
+            totalRounds = parseInt(roundSlider.value);
+            confirmRoundBtn.style.transform = 'scale(0.95)';
+            confirmRoundBtn.style.background = 'var(--text-color-light)';
+            confirmRoundBtn.style.color = 'var(--primary-bg)';
+
+            setTimeout(() => {
+                transitionToScreen('round-select-screen', 'team-setup-screen');
+            }, 200);
+        });
+    }
+
+    // Setup team management
+    setupTeamManagement();
+
+    // Setup final start game button
+    const finalStartGameBtn = document.getElementById('final-start-game-btn');
+    if (finalStartGameBtn) {
+        finalStartGameBtn.addEventListener('click', () => {
+            finalStartGameBtn.style.transform = 'scale(0.95)';
+            finalStartGameBtn.style.background = 'var(--text-color-light)';
+            finalStartGameBtn.style.color = 'var(--primary-bg)';
+
+            setTimeout(() => {
+                finalizeGameSetup();
+            }, 200);
+        });
+    }
+
+    // Create progress indicator
+    createProgressIndicator();
+
     updateAvailablePlayersDisplay();
-    document.getElementById('start-btn').addEventListener('click', startGame);
-    
+
     const toggleButton = document.getElementById('toggle-word-btn');
-    toggleButton.replaceWith(toggleButton.cloneNode(true));
-    
-    document.getElementById('toggle-word-btn').addEventListener('click', toggleWordVisibility);
+    if (toggleButton) {
+        toggleButton.addEventListener('click', toggleWordVisibility);
+    }
+
+    const gameToggleButton = document.getElementById('game-toggle-word-btn');
+    if (gameToggleButton) {
+        gameToggleButton.addEventListener('click', toggleWordVisibility);
+    }
 
     document.querySelectorAll('.team-log').forEach(log => {
         log.style.display = 'none';
@@ -1155,6 +1543,53 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('team1-word-log').closest('.team-log').style.display = 'block';
 
     initializeSpeechRecognition();
+    initializeDragAndDrop();
+
+    // Mobile-specific fixes
+    if (isMobileDevice()) {
+        // Fix all text inputs for mobile
+        const allInputs = document.querySelectorAll('input[type="text"], input[type="number"], textarea');
+        
+        // Enhance buttons for mobile touch
+        const allButtons = document.querySelectorAll('.btn');
+        allButtons.forEach(button => {
+            button.style.touchAction = 'manipulation';
+            button.style.webkitTapHighlightColor = 'transparent';
+            
+            // Add touch feedback
+            button.addEventListener('touchstart', (e) => {
+                button.style.transform = 'scale(0.95)';
+                if (navigator.vibrate) {
+                    navigator.vibrate(30);
+                }
+            }, { passive: true });
+            
+            button.addEventListener('touchend', (e) => {
+                setTimeout(() => {
+                    button.style.transform = '';
+                }, 100);
+            }, { passive: true });
+        });
+        allInputs.forEach(input => {
+            input.style.fontSize = '16px';
+            input.style.webkitAppearance = 'none';
+            input.style.appearance = 'none';
+            input.style.touchAction = 'manipulation';
+            input.style.webkitUserSelect = 'text';
+            input.style.userSelect = 'text';
+            input.style.webkitTouchCallout = 'default';
+        });
+
+        // Prevent zoom on input focus for iOS
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport) {
+            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        }
+
+        // Add mobile-specific event listeners
+        document.addEventListener('touchstart', function () { }, { passive: true });
+        document.addEventListener('touchmove', function () { }, { passive: true });
+    }
 });
 
 function showDifficultySelectScreen() {
@@ -1173,7 +1608,11 @@ function showDifficultySelectScreen() {
 }
 
 function updateAvailablePlayersDisplay() {
-    const availablePlayersDiv = document.getElementById('available-players');
+    const availablePlayersDiv = document.getElementById('available-players-setup');
+    if (!availablePlayersDiv) {
+        console.warn('Available players container not found');
+        return;
+    }
     availablePlayersDiv.innerHTML = '';
     players.available.forEach(playerName => {
         // Use createPlayerElement so touch handlers are attached!
@@ -1300,9 +1739,9 @@ function selectPlayerCount(count) {
 
     const playerSelectScreen = document.getElementById('player-select-screen');
     const difficultySelectScreen = document.getElementById('difficulty-select-screen');
-    
+
     playerSelectScreen.style.display = 'none';
-    
+
     difficultySelectScreen.style.display = 'block';
     difficultySelectScreen.classList.add('active');
 }
@@ -1347,4 +1786,497 @@ function getPlayerCurrentTeam(playerName) {
         return 2;
     }
     return null; // Return null if player is not assigned to a team
+}
+
+// --- Fallback: Simple Tap-to-Move System ---
+let selectedPlayer = null;
+
+function addSimpleTouchFallback(element) {
+    let tapCount = 0;
+    let tapTimer = null;
+
+    element.addEventListener('click', (e) => {
+        if (gameStarted) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        tapCount++;
+
+        if (tapCount === 1) {
+            tapTimer = setTimeout(() => {
+                // Single tap - select player for mobile
+                handleMobilePlayerSelection(element);
+                tapCount = 0;
+            }, 250);
+        } else if (tapCount === 2) {
+            // Double tap - quick move to available
+            clearTimeout(tapTimer);
+            handleQuickMoveToAvailable(element);
+            tapCount = 0;
+        }
+    });
+}
+
+function handleMobilePlayerSelection(element) {
+    // Clear previous selection
+    document.querySelectorAll('.player.selected').forEach(p => p.classList.remove('selected'));
+
+    if (selectedPlayer === element) {
+        // Deselect if clicking same player
+        selectedPlayer = null;
+        return;
+    }
+
+    // Select new player
+    selectedPlayer = element;
+    element.classList.add('selected');
+
+    // Show mobile-friendly move options
+    showMobileMoveOptions(element.textContent);
+}
+
+function showMobileMoveOptions(playerName) {
+    // Create a mobile-optimized modal with move options
+    const modal = document.createElement('div');
+    modal.className = 'move-options-modal';
+    modal.innerHTML = `
+        <div class="move-options-content">
+            <h3>Move ${playerName}</h3>
+            <div class="mobile-move-buttons">
+                <button onclick="movePlayerTo('available')" class="btn primary-btn mobile-move-btn">Available Players</button>
+                <button onclick="movePlayerTo('team1')" class="btn primary-btn mobile-move-btn">Team 1 Players</button>
+                <button onclick="movePlayerTo('team2')" class="btn primary-btn mobile-move-btn">Team 2 Players</button>
+                <button onclick="movePlayerTo('team1-leader')" class="btn secondary-btn mobile-move-btn">Team 1 Leader</button>
+                <button onclick="movePlayerTo('team2-leader')" class="btn secondary-btn mobile-move-btn">Team 2 Leader</button>
+                <button onclick="closeMoveOptions()" class="btn danger-btn mobile-move-btn">Cancel</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+function handlePlayerSelection(element) {
+    // Clear previous selection
+    document.querySelectorAll('.player.selected').forEach(p => p.classList.remove('selected'));
+
+    if (selectedPlayer === element) {
+        // Deselect if clicking same player
+        selectedPlayer = null;
+        return;
+    }
+
+    // Select new player
+    selectedPlayer = element;
+    element.classList.add('selected');
+
+    // Show move options
+    showMoveOptions(element.textContent);
+}
+
+function showMoveOptions(playerName) {
+    // Create a simple modal with move options
+    const modal = document.createElement('div');
+    modal.className = 'move-options-modal';
+    modal.innerHTML = `
+        <div class="move-options-content">
+            <h3>Move ${playerName}</h3>
+            <button onclick="movePlayerTo('available')" class="btn primary-btn">Available Players</button>
+            <button onclick="movePlayerTo('team1')" class="btn primary-btn">Team 1</button>
+            <button onclick="movePlayerTo('team2')" class="btn primary-btn">Team 2</button>
+            <button onclick="movePlayerTo('team1-leader')" class="btn secondary-btn">Team 1 Leader</button>
+            <button onclick="movePlayerTo('team2-leader')" class="btn secondary-btn">Team 2 Leader</button>
+            <button onclick="closeMoveOptions()" class="btn danger-btn">Cancel</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+function movePlayerTo(destination) {
+    if (!selectedPlayer) return;
+
+    const playerName = selectedPlayer.textContent;
+
+    switch (destination) {
+        case 'available':
+            handleDropToAvailable(playerName);
+            break;
+        case 'team1':
+            handleDropToTeam(playerName, 1);
+            break;
+        case 'team2':
+            handleDropToTeam(playerName, 2);
+            break;
+        case 'team1-leader':
+            handleDropToLeader(playerName, 1);
+            break;
+        case 'team2-leader':
+            handleDropToLeader(playerName, 2);
+            break;
+    }
+
+    closeMoveOptions();
+}
+
+function closeMoveOptions() {
+    const modal = document.querySelector('.move-options-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
+    }
+
+    // Clear selection
+    if (selectedPlayer) {
+        selectedPlayer.classList.remove('selected');
+        selectedPlayer = null;
+    }
+}
+
+function handleQuickMoveToAvailable(element) {
+    const playerName = element.textContent;
+    const currentLocation = getPlayerLocation(playerName);
+
+    if (currentLocation !== 'available') {
+        handleDropToAvailable(playerName);
+    }
+}
+
+// --- Team Setup Management ---
+function setupTeamManagement() {
+    const addPlayerBtn = document.getElementById('add-player-btn');
+    const playerNameInput = document.getElementById('player-name-input');
+    const confirmTeamsBtn = document.getElementById('confirm-teams-btn');
+
+    if (addPlayerBtn && playerNameInput) {
+        addPlayerBtn.addEventListener('click', addPlayerToSetup);
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addPlayerToSetup();
+            }
+        });
+    }
+
+    if (confirmTeamsBtn) {
+        confirmTeamsBtn.addEventListener('click', () => {
+            if (validateTeamSetup()) {
+                confirmTeamsBtn.style.transform = 'scale(0.95)';
+                confirmTeamsBtn.style.background = 'var(--text-color-light)';
+                confirmTeamsBtn.style.color = 'var(--primary-bg)';
+
+                setTimeout(() => {
+                    transitionToScreen('team-setup-screen', 'word-generation-screen');
+                    startWordGeneration();
+                }, 200);
+            }
+        });
+    }
+}
+
+function addPlayerToSetup() {
+    const playerNameInput = document.getElementById('player-name-input');
+    const playerName = playerNameInput.value.trim();
+
+    if (!playerName) return;
+
+    // Check if name already exists
+    const existingPlayers = document.querySelectorAll('.player[data-player-name]');
+    const nameExists = Array.from(existingPlayers).some(p =>
+        p.dataset.playerName.toLowerCase() === playerName.toLowerCase()
+    );
+
+    if (nameExists) {
+        showErrorModal('A player with this name already exists!');
+        return;
+    }
+
+    // Check player limit
+    if (existingPlayers.length >= numberOfPlayers) {
+        showErrorModal(`You can only add ${numberOfPlayers} players!`);
+        return;
+    }
+
+    // Add player to available players
+    const availableContainer = document.getElementById('available-players-setup');
+    const playerElement = createSetupPlayerElement(playerName);
+    availableContainer.appendChild(playerElement);
+
+    playerNameInput.value = '';
+
+    // Only focus on desktop, not mobile to prevent keyboard issues
+    if (!isMobileDevice()) {
+        playerNameInput.focus();
+    }
+}
+
+function createSetupPlayerElement(playerName) {
+    const playerElement = document.createElement('div');
+    playerElement.className = 'player';
+    playerElement.textContent = playerName;
+    playerElement.dataset.playerName = playerName;
+    playerElement.draggable = true;
+
+    // Add drag and drop for team setup
+    playerElement.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', playerName);
+    });
+
+    // Add touch support for mobile
+    if (isMobileDevice()) {
+        addTouchSupport(playerElement);
+        addSimpleTouchFallback(playerElement);
+    }
+
+    return playerElement;
+}
+
+function validateTeamSetup() {
+    const team1Leader = document.getElementById('team1-leader-container').children.length > 0;
+    const team2Leader = document.getElementById('team2-leader-container').children.length > 0;
+    const team1Players = document.getElementById('team1-players-setup').children.length;
+    const team2Players = document.getElementById('team2-players-setup').children.length;
+
+    if (!team1Leader || !team2Leader) {
+        showErrorModal('Each team needs a leader!');
+        return false;
+    }
+
+    if (team1Players === 0 || team2Players === 0) {
+        showErrorModal('Each team needs at least one player besides the leader!');
+        return false;
+    }
+
+    const totalAssigned = team1Players + team2Players + 2; // +2 for leaders
+    const availablePlayers = document.getElementById('available-players-setup').children.length;
+
+    if (availablePlayers > 0) {
+        showErrorModal('Please assign all players to teams!');
+        return false;
+    }
+
+    return true;
+}
+
+function startWordGeneration() {
+    // Show loading spinner
+    const spinner = document.querySelector('.loading-spinner');
+    const wordSection = document.querySelector('.word-section');
+    const gameInfo = document.querySelector('.game-info');
+    const startButton = document.getElementById('final-start-game-btn');
+
+    if (spinner) spinner.style.display = 'block';
+    if (wordSection) wordSection.style.opacity = '0';
+    if (gameInfo) gameInfo.style.opacity = '0';
+    if (startButton) startButton.style.display = 'none';
+
+    // Update game info
+    document.getElementById('final-player-count').textContent = numberOfPlayers;
+    document.getElementById('final-round-count').textContent = totalRounds;
+    document.getElementById('final-difficulty').textContent = gameDifficulty.charAt(0).toUpperCase() + gameDifficulty.slice(1);
+
+    // Generate word after delay for effect
+    setTimeout(async () => {
+        await generateNewWord();
+
+        if (spinner) spinner.style.display = 'none';
+        if (wordSection) {
+            wordSection.style.opacity = '1';
+        }
+        if (gameInfo) gameInfo.style.opacity = '1';
+
+        // Show start game button instead of auto-starting
+        if (startButton) {
+            startButton.style.display = 'block';
+            startButton.style.opacity = '1';
+        }
+    }, 1500);
+}
+
+function finalizeGameSetup() {
+    // Transfer setup data to main game
+    players.available = [];
+    players.team1 = [];
+    players.team2 = [];
+
+    // Get team 1 data
+    const team1LeaderElement = document.querySelector('#team1-leader-container .player');
+    if (team1LeaderElement) {
+        players.team1Leader = team1LeaderElement.dataset.playerName;
+    }
+
+    const team1PlayerElements = document.querySelectorAll('#team1-players-setup .player');
+    team1PlayerElements.forEach(el => {
+        players.team1.push(el.dataset.playerName);
+    });
+
+    // Get team 2 data
+    const team2LeaderElement = document.querySelector('#team2-leader-container .player');
+    if (team2LeaderElement) {
+        players.team2Leader = team2LeaderElement.dataset.playerName;
+    }
+
+    const team2PlayerElements = document.querySelectorAll('#team2-players-setup .player');
+    team2PlayerElements.forEach(el => {
+        players.team2.push(el.dataset.playerName);
+    });
+
+    // Hide setup screens and transition to game
+    const wordScreen = document.getElementById('word-generation-screen');
+    const gameContainer = document.getElementById('game-container');
+    const progressIndicator = document.querySelector('.setup-progress');
+
+    // Hide progress indicator
+    if (progressIndicator) {
+        progressIndicator.style.opacity = '0';
+        setTimeout(() => progressIndicator.remove(), 500);
+    }
+
+    // Smooth transition to game
+    wordScreen.style.transform = 'translateX(-100%)';
+    wordScreen.style.opacity = '0';
+
+    setTimeout(() => {
+        wordScreen.style.display = 'none';
+        gameContainer.style.display = 'block';
+        gameContainer.style.opacity = '0';
+        gameContainer.style.transform = 'translateX(100%)';
+
+        // Animate game container in
+        setTimeout(() => {
+            gameContainer.style.transition = 'all 0.5s ease';
+            gameContainer.style.opacity = '1';
+            gameContainer.style.transform = 'translateX(0)';
+
+            // Start the game after transition
+            setTimeout(() => {
+                startGame();
+            }, 500);
+        }, 50);
+    }, 500);
+}
+
+// --- Team Setup Drag and Drop ---
+function initializeTeamSetupDragDrop() {
+    const dropZones = document.querySelectorAll('#team1-leader-container, #team2-leader-container, #team1-players-setup, #team2-players-setup, #available-players-setup');
+
+    dropZones.forEach(zone => {
+        // Desktop drag and drop
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('drag-over');
+        });
+
+        zone.addEventListener('dragleave', (e) => {
+            if (!zone.contains(e.relatedTarget)) {
+                zone.classList.remove('drag-over');
+            }
+        });
+
+        // Mobile touch support
+        if (isMobileDevice()) {
+            zone.style.touchAction = 'none';
+            zone.style.webkitUserSelect = 'none';
+            zone.style.userSelect = 'none';
+        }
+
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+
+            const playerName = e.dataTransfer.getData('text/plain');
+            const draggedElement = document.querySelector(`[data-player-name="${playerName}"]`);
+
+            if (!draggedElement) return;
+
+            // Remove from current location
+            draggedElement.remove();
+
+            // Add to new location
+            if (zone.id.includes('leader') && zone.children.length > 0) {
+                // Leader slot is full, move existing leader to available
+                const existingLeader = zone.children[0];
+                document.getElementById('available-players-setup').appendChild(existingLeader);
+            }
+
+            zone.appendChild(draggedElement);
+        });
+    });
+}
+
+// Initialize team setup drag and drop when the screen becomes active
+function initializeTeamSetup() {
+    initializeTeamSetupDragDrop();
+
+    // Focus on player name input (but not on mobile to prevent keyboard issues)
+    const playerNameInput = document.getElementById('player-name-input');
+    if (playerNameInput && !isMobileDevice()) {
+        setTimeout(() => playerNameInput.focus(), 100);
+    }
+
+    // Ensure mobile input works properly
+    if (playerNameInput && isMobileDevice()) {
+        playerNameInput.style.fontSize = '16px';
+        playerNameInput.style.webkitAppearance = 'none';
+        playerNameInput.style.appearance = 'none';
+        playerNameInput.style.touchAction = 'manipulation';
+        playerNameInput.style.webkitUserSelect = 'text';
+        playerNameInput.style.userSelect = 'text';
+    }
+}
+
+// --- Team Setup Specific Drag and Drop Handlers ---
+function handleTeamSetupDropToLeader(playerName, teamNumber) {
+    const leaderContainer = document.getElementById(`team${teamNumber}-leader-container`);
+    const availableContainer = document.getElementById('available-players-setup');
+    const draggedElement = document.querySelector(`[data-player-name="${playerName}"]`);
+
+    if (!draggedElement || !leaderContainer || !availableContainer) return;
+
+    // Check if leader slot is already occupied
+    if (leaderContainer.children.length > 0) {
+        // Move existing leader back to available
+        const existingLeader = leaderContainer.children[0];
+        availableContainer.appendChild(existingLeader);
+    }
+
+    // Remove dragged element from its current location
+    draggedElement.remove();
+
+    // Add to leader slot
+    leaderContainer.appendChild(draggedElement);
+}
+
+function handleTeamSetupDropToTeam(playerName, teamNumber) {
+    const playersContainer = document.getElementById(`team${teamNumber}-players-setup`);
+    const draggedElement = document.querySelector(`[data-player-name="${playerName}"]`);
+
+    if (!draggedElement || !playersContainer) return;
+
+    // Check team size limit
+    const currentTeamSize = getTeamSize(teamNumber);
+    if (currentTeamSize >= maxTeamSize) {
+        showErrorModal(`Team ${teamNumber} is full!`);
+        return;
+    }
+
+    // Remove dragged element from its current location
+    draggedElement.remove();
+
+    // Add to team players
+    playersContainer.appendChild(draggedElement);
+}
+
+function handleTeamSetupDropToAvailable(playerName) {
+    const availableContainer = document.getElementById('available-players-setup');
+    const draggedElement = document.querySelector(`[data-player-name="${playerName}"]`);
+
+    if (!draggedElement || !availableContainer) return;
+
+    // Remove dragged element from its current location
+    draggedElement.remove();
+
+    // Add to available players
+    availableContainer.appendChild(draggedElement);
 }
