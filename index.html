@@ -42,7 +42,8 @@
             <div class="card-content">
                 <h2>Choose Number of Rounds</h2>
                 <div class="player-slider-container">
-                    <input type="range" min="3" max="15" value="5" class="player-slider" id="round-slider-input" step="1">
+                    <input type="range" min="3" max="15" value="5" class="player-slider" id="round-slider-input"
+                        step="1">
                     <div class="slider-value-container">
                         Rounds: [<span id="round-slider-value">5</span>]
                     </div>
@@ -59,13 +60,13 @@
                         <input type="text" id="player-name-input" placeholder="Enter player name" maxlength="20">
                         <button class="btn secondary-btn" id="add-player-btn">Add Player</button>
                     </div>
-                    
+
                     <div class="players-setup">
                         <div class="available-players-section">
                             <h3>Available Players</h3>
                             <div id="available-players-setup" class="players-list"></div>
                         </div>
-                        
+
                         <div class="teams-setup">
                             <div class="team-setup" id="team1-setup">
                                 <h3>Team 1</h3>
@@ -75,7 +76,7 @@
                                 </div>
                                 <div class="players-list" id="team1-players-setup"></div>
                             </div>
-                            
+
                             <div class="team-setup" id="team2-setup">
                                 <h3>Team 2</h3>
                                 <div class="leader-slot" id="team2-leader-setup">
@@ -96,7 +97,7 @@
                 <h2>Ready to Play!</h2>
                 <div class="word-generation-container">
                     <div class="loading-spinner"></div>
-                    
+
                     <div class="word-section">
                         <h3>Current Word:</h3>
                         <p id="current-word" class="word-display"></p>
@@ -105,13 +106,13 @@
                             <button class="btn secondary-btn" id="toggle-word-btn">Hide Word</button>
                         </div>
                     </div>
-                    
+
                     <div class="game-info">
                         <p><strong>Players:</strong> <span id="final-player-count"></span></p>
                         <p><strong>Rounds:</strong> <span id="final-round-count"></span></p>
                         <p><strong>Difficulty:</strong> <span id="final-difficulty"></span></p>
                     </div>
-                    
+
                     <button class="btn primary-btn" id="final-start-game-btn" style="display: none;">Start Game</button>
                 </div>
             </div>
@@ -125,7 +126,7 @@
             <main>
                 <section class="game-screen card">
                     <h2>Game in Progress</h2>
-                    
+
                     <div class="current-word-display">
                         <h3>Current Word:</h3>
                         <p id="game-current-word" class="word-display"></p>
