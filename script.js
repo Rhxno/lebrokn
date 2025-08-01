@@ -182,7 +182,8 @@ function initializeSpeechRecognition() {
             }
             const teamNumber = parseInt(button.dataset.team);
             if (gameStarted && teamNumber !== currentTeam) {
-                showErrorModal(`It's not Team ${teamNumber}'s turn!`);
+                const currentLeaderName = teamNumber === 1 ? players.team1Leader : players.team2Leader;
+                showErrorModal(`It's not ${currentLeaderName}'s team's turn!`);
                 return;
             }
             targetInput = document.getElementById(`team${teamNumber}-word-log`);
@@ -218,12 +219,27 @@ function stopListeningUIUpdate() {
 
 // --- Player Management ---
 function addPlayer() {
+    // This function is deprecated - we now use the DOM-based team setup system
+    console.warn('addPlayer() called - this function is deprecated. Use addPlayerToSetup() instead.');
+    
     if (gameStarted) {
-        showErrorModal('Cannot add players after the game has started!');
+        console.warn('Game already started, ignoring addPlayer call');
+        return;
+    }
+
+    // Check if we're in the new team setup mode
+    const teamSetupScreen = document.getElementById('team-setup-screen');
+    if (teamSetupScreen && teamSetupScreen.classList.contains('active')) {
+        console.warn('Team setup screen is active, ignoring old addPlayer call');
         return;
     }
 
     const playerNameInput = document.getElementById('player-name');
+    if (!playerNameInput) {
+        console.warn('Old player name input not found, ignoring addPlayer call');
+        return;
+    }
+    
     const playerName = playerNameInput.value.trim();
 
     if (!playerName) return; // Don't add empty names
@@ -875,17 +891,23 @@ async function startGame() {
 
     gameStarted = true;
 
-    // Disable the 'Generate Word' button after start
-    const generateWordButton = document.querySelector('.word-controls button:first-child');
-    if (generateWordButton) {
-        generateWordButton.disabled = true;
-    }
+    // Disable all 'Generate Word' buttons after game starts
+    const generateWordButtons = document.querySelectorAll('button[onclick*="generateNew"]');
+    generateWordButtons.forEach(button => {
+        button.disabled = true;
+        button.style.opacity = '0.5';
+        button.style.cursor = 'not-allowed';
+        button.title = 'Word generation disabled during gameplay';
+    });
 
     // Hide setup screens and show game container
     document.querySelectorAll('.setup-screen').forEach(screen => {
         screen.style.display = 'none';
     });
     document.getElementById('game-container').style.display = 'block';
+    
+    // Update team log headers with leader names
+    updateTeamLogHeaders();
 
     currentTeam = 1;
     currentRound = 0;
@@ -917,6 +939,12 @@ async function startGame() {
 }
 
 async function generateNewWord() {
+    // Prevent word generation during active gameplay
+    if (gameStarted) {
+        showErrorModal('Cannot generate new word during gameplay! The word has already been chosen.');
+        return;
+    }
+    
     try {
         currentWord = await fetchRandomWord();
         const wordElement = document.getElementById('current-word');
@@ -932,6 +960,9 @@ async function generateNewWord() {
             wordElement.style.border = '1px solid var(--border-color)';
             wordElement.classList.remove('word-hidden');
             isWordVisible = true;
+            
+            // Adjust font size for long words on mobile
+            adjustWordFontSize(wordElement, currentWord);
 
             if (toggleButton) {
                 toggleButton.textContent = 'Hide Word';
@@ -946,14 +977,88 @@ async function generateNewWord() {
             gameWordElement.style.color = 'var(--text-color-light)';
             gameWordElement.style.border = '1px solid var(--border-color)';
             gameWordElement.classList.remove('word-hidden');
+            
+            // Adjust font size for long words on mobile
+            adjustWordFontSize(gameWordElement, currentWord);
         }
     } catch (error) {
         console.error('Error generating word:', error);
     }
 }
 
+// Function to adjust font size based on word length
+function adjustWordFontSize(element, word) {
+    if (!element || !word) return;
+    
+    const isMobile = window.innerWidth <= 768;
+    const wordLength = word.length;
+    
+    if (isMobile) {
+        if (wordLength <= 6) {
+            element.style.fontSize = '1.3rem';
+        } else if (wordLength <= 10) {
+            element.style.fontSize = '1.1rem';
+        } else if (wordLength <= 14) {
+            element.style.fontSize = '0.9rem';
+        } else {
+            element.style.fontSize = '0.8rem';
+        }
+    } else {
+        if (wordLength <= 6) {
+            element.style.fontSize = '1.8rem';
+        } else if (wordLength <= 10) {
+            element.style.fontSize = '1.5rem';
+        } else if (wordLength <= 14) {
+            element.style.fontSize = '1.2rem';
+        } else {
+            element.style.fontSize = '1rem';
+        }
+    }
+}
+
+// Function to update team log headers with leader names
+function updateTeamLogHeaders() {
+    const team1LogHeader = document.querySelector('.team-log:first-child h3');
+    const team2LogHeader = document.querySelector('.team-log:last-child h3');
+    
+    if (team1LogHeader && players.team1Leader) {
+        team1LogHeader.textContent = `${players.team1Leader}'s Team Log`;
+    }
+    
+    if (team2LogHeader && players.team2Leader) {
+        team2LogHeader.textContent = `${players.team2Leader}'s Team Log`;
+    }
+    
+    // Also update placeholders and aria labels
+    const team1Input = document.getElementById('team1-word-log');
+    const team2Input = document.getElementById('team2-word-log');
+    const team1MicBtn = document.getElementById('mic-btn-1');
+    const team2MicBtn = document.getElementById('mic-btn-2');
+    
+    if (team1Input && players.team1Leader) {
+        team1Input.placeholder = `Enter word for ${players.team1Leader}'s team`;
+    }
+    
+    if (team2Input && players.team2Leader) {
+        team2Input.placeholder = `Enter word for ${players.team2Leader}'s team`;
+    }
+    
+    if (team1MicBtn && players.team1Leader) {
+        team1MicBtn.setAttribute('aria-label', `Use Microphone for ${players.team1Leader}'s team`);
+    }
+    
+    if (team2MicBtn && players.team2Leader) {
+        team2MicBtn.setAttribute('aria-label', `Use Microphone for ${players.team2Leader}'s team`);
+    }
+}
+
 // Function for generating new word during game
 async function generateNewGameWord() {
+    // This function should not be called during gameplay
+    if (gameStarted) {
+        showErrorModal('Cannot generate new word during gameplay! The word has already been chosen.');
+        return;
+    }
     await generateNewWord();
 }
 
@@ -1037,7 +1142,8 @@ function showTurnOverlay() {
     const playerNameDisplay = document.getElementById('turn-player-name');
     const teamIndicatorDisplay = document.getElementById('turn-team-indicator');
 
-    const currentTeamName = `Team ${currentTeam}`;
+    const currentLeaderName = currentTeam === 1 ? players.team1Leader : players.team2Leader;
+    const currentTeamName = `${currentLeaderName}'s Team`;
     const currentPlayerName = currentGuesser;
     const teamColor = currentTeam === 1 ? 'var(--team1-color)' : 'var(--team2-color)';
 
@@ -1071,7 +1177,8 @@ function updateActiveTeamLog() {
 // --- Referee Logging ---
 function logWord(teamNumber) {
     if (teamNumber !== currentTeam) {
-        showErrorModal(`It's not Team ${teamNumber}'s turn!`);
+        const teamLeaderName = teamNumber === 1 ? players.team1Leader : players.team2Leader;
+        showErrorModal(`It's not ${teamLeaderName}'s team's turn!`);
         return;
     }
 
@@ -1110,7 +1217,8 @@ function logWord(teamNumber) {
     wordLogInput.value = '';
 
     if (word === currentWord) {
-        showErrorModal(`Team ${teamNumber} guessed the password!`);
+        const teamLeaderName = teamNumber === 1 ? players.team1Leader : players.team2Leader;
+        showErrorModal(`${teamLeaderName}'s team guessed the password!`);
         endRound();
         return;
     }
@@ -1139,8 +1247,9 @@ function updateScore(teamNumber) {
 }
 
 async function endRound() {
+    const currentLeaderName = currentTeam === 1 ? players.team1Leader : players.team2Leader;
     const victoryMessage = `
-        Team ${currentTeam} Wins Round ${currentRound + 1}!
+        ${currentLeaderName}'s Team Wins Round ${currentRound + 1}!
     `;
 
     showErrorModal(victoryMessage, true);
@@ -1150,15 +1259,17 @@ async function endRound() {
         setTimeout(() => {
             const finalMessage = `
                 Game Over!<br>
-                <span class="final-score">Final Score: Team ${currentTeam} Wins!</span>
+                <span class="final-score">Final Score: ${currentLeaderName}'s Team Wins!</span>
             `;
             showErrorModal(finalMessage, true);
             endGame();
         }, 2000);
     } else {
-        setTimeout(async () => {
-            await generateNewWord();
+        setTimeout(() => {
+            // Continue with the same word for the next round
+            // No new word generation - teams continue guessing the same word
             switchTeams();
+            showTurnOverlay();
         }, 2000);
     }
 }
@@ -1525,7 +1636,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create progress indicator
     createProgressIndicator();
 
-    updateAvailablePlayersDisplay();
+    // Note: updateAvailablePlayersDisplay() removed as we use DOM-based team setup now
 
     const toggleButton = document.getElementById('toggle-word-btn');
     if (toggleButton) {
@@ -2096,9 +2207,12 @@ function startWordGeneration() {
 
 function finalizeGameSetup() {
     // Transfer setup data to main game
+    // Completely reset all player data
     players.available = [];
     players.team1 = [];
     players.team2 = [];
+    players.team1Leader = null;
+    players.team2Leader = null;
 
     // Get team 1 data
     const team1LeaderElement = document.querySelector('#team1-leader-container .player');
@@ -2120,6 +2234,14 @@ function finalizeGameSetup() {
     const team2PlayerElements = document.querySelectorAll('#team2-players-setup .player');
     team2PlayerElements.forEach(el => {
         players.team2.push(el.dataset.playerName);
+    });
+
+    // Debug: Log final player setup
+    console.log('Final player setup:', {
+        team1Leader: players.team1Leader,
+        team1: players.team1,
+        team2Leader: players.team2Leader,
+        team2: players.team2
     });
 
     // Hide setup screens and transition to game
