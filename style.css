@@ -2757,11 +2757,11 @@ Word Hide/Show Effects */
     background: linear-gradient(145deg, var(--secondary-bg), var(--tertiary-bg));
     border: 1px solid var(--border-color);
     border-radius: 16px;
-    padding: 1.5rem;
+    padding: 1rem;
     max-width: 95vw;
-    max-height: 95vh;
+    max-height: 90vh;
     width: 95%;
-    height: 95%;
+    height: 90vh;
     text-align: center;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(20px);
@@ -2773,6 +2773,7 @@ Word Hide/Show Effects */
     visibility: visible;
     overflow: hidden;
     box-sizing: border-box;
+    justify-content: space-between;
 }
 
 .setup-screen .btn {
@@ -2871,9 +2872,6 @@ Word Hide/Show Effects */
     font-weight: 600;
     letter-spacing: 0.5px;
     border-radius: 12px;
-    background: linear-gradient(145deg, var(--tertiary-bg), var(--quaternary-bg));
-    border: 2px solid var(--border-color);
-    color: var(--text-color-light);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -2881,11 +2879,37 @@ Word Hide/Show Effects */
     min-width: 100px;
 }
 
+/* Ensure ALL primary buttons have consistent white styling */
+.btn.primary-btn,
+.btn.primary-btn.difficulty-slot-btn,
+.btn.primary-btn.round-slot-btn,
+#confirm-player-count-btn,
+#confirm-round-count-btn,
+#confirm-teams-btn,
+#final-start-game-btn {
+    background: var(--text-color-light) !important;
+    border: 2px solid var(--text-color-light) !important;
+    color: var(--primary-bg) !important;
+}
+
 .difficulty-slot-btn:hover,
 .round-slot-btn:hover {
     transform: translateY(-5px) scale(1.05);
-    border-color: var(--text-color-light);
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Primary button hover states - ALL primary buttons */
+.btn.primary-btn:hover,
+.btn.primary-btn.difficulty-slot-btn:hover,
+.btn.primary-btn.round-slot-btn:hover,
+#confirm-player-count-btn:hover,
+#confirm-round-count-btn:hover,
+#confirm-teams-btn:hover,
+#final-start-game-btn:hover {
+    background: var(--text-color-dark) !important;
+    border-color: var(--text-color-dark) !important;
+    color: var(--primary-bg) !important;
+    box-shadow: 0 15px 40px rgba(255, 255, 255, 0.2) !important;
 }
 
 .difficulty-slot-btn:active,
@@ -3346,18 +3370,19 @@ Word Hide/Show Effects */
         height: calc(100vh - 0.5rem) !important;
         max-height: calc(100vh - 0.5rem) !important;
         overflow: hidden !important;
-        padding: 0.5rem !important;
+        padding: 0.4rem !important;
         margin: 0 !important;
         width: calc(100vw - 0.5rem) !important;
         max-width: calc(100vw - 0.5rem) !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
+        justify-content: space-between !important;
     }
 
     #team-setup-screen h2 {
-        font-size: 1.2rem !important;
-        margin-bottom: 0.5rem !important;
+        font-size: 1.1rem !important;
+        margin-bottom: 0.4rem !important;
         flex-shrink: 0 !important;
     }
 
@@ -3367,6 +3392,18 @@ Word Hide/Show Effects */
         max-width: 100%;
         padding: 0;
         margin: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    /* Ensure the continue button is always at the bottom and visible */
+    #confirm-teams-btn {
+        margin-top: auto !important;
+        margin-bottom: 0 !important;
     }
 
     /* Better mobile input styling */
@@ -3495,6 +3532,8 @@ Word Hide/Show Effects */
         border-radius: 8px !important;
         margin: 0.3rem 0 !important;
         flex-shrink: 0 !important;
+        position: relative !important;
+        z-index: 10 !important;
     }
 
     /* Compact mobile add player section */
@@ -3697,7 +3736,7 @@ Word Hide/Show Effects */
 /* 
 Final start game button styling */
 #final-start-game-btn {
-    margin-top: 1rem;
+    margin-top: auto;
     padding: 1rem 2rem;
     font-size: 1rem;
     font-weight: 600;
@@ -3730,64 +3769,181 @@ Final start game button styling */
     #final-start-game-btn {
         width: 100% !important;
         max-width: 100% !important;
-        margin-top: 0.8rem !important;
-        padding: 0.8rem 1.5rem !important;
-        font-size: 14px !important;
-        min-height: 48px !important;
+        margin-top: 0.1rem !important;
+        padding: 0.4rem 0.8rem !important;
+        font-size: 10px !important;
+        min-height: 30px !important;
         touch-action: manipulation !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        z-index: 100 !important;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Mobile word generation screen specific fixes */
+    #word-generation-screen .card-content {
+        height: calc(100vh - 0.2rem) !important;
+        max-height: calc(100vh - 0.2rem) !important;
+        padding: 0.15rem !important;
+        justify-content: space-between !important;
+        overflow: hidden !important;
+    }
+
+    #word-generation-screen h2 {
+        font-size: 0.75rem !important;
+        margin-bottom: 0.1rem !important;
         flex-shrink: 0 !important;
     }
 
-    /* Mobile error modal improvements */
-    .modal-content {
-        width: 95% !important;
-        max-width: 95% !important;
-        padding: 1.5rem !important;
-        margin: 1rem !important;
-        border-radius: 16px !important;
+    #word-generation-screen .word-generation-container {
+        gap: 0.1rem !important;
+        height: 100% !important;
+        justify-content: space-between !important;
+        overflow: hidden !important;
+        flex: 1 !important;
     }
 
-    .close-btn {
-        font-size: 2rem !important;
-        padding: 0.5rem !important;
-        min-width: 44px !important;
-        min-height: 44px !important;
-        touch-action: manipulation !important;
-        -webkit-tap-highlight-color: transparent !important;
+    #word-generation-screen .loading-spinner {
+        flex-shrink: 0 !important;
+        width: 20px !important;
+        height: 20px !important;
     }
 
-    /* Mobile team log improvements */
-    .team-log {
-        padding: 1rem !important;
-        margin-bottom: 1rem !important;
+    #word-generation-screen .word-section {
+        padding: 0.15rem !important;
+        margin: 0.05rem 0 !important;
+        flex-shrink: 0 !important;
     }
 
-    .log-input-container {
-        flex-direction: column !important;
-        gap: 0.8rem !important;
+    #word-generation-screen .word-section h3 {
+        font-size: 0.65rem !important;
+        margin-bottom: 0.1rem !important;
     }
 
-    .log-input-container input {
-        width: 100% !important;
-        font-size: 16px !important;
-        min-height: 52px !important;
-        padding: 1rem 1.25rem !important;
+    #word-generation-screen .word-controls {
+        gap: 0.3rem !important;
+        margin-top: 0.3rem !important;
     }
 
-    .mic-btn {
-        min-height: 52px !important;
-        min-width: 52px !important;
-        font-size: 1.5rem !important;
-        touch-action: manipulation !important;
+    #word-generation-screen .word-controls .btn {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.7rem !important;
+        min-height: 32px !important;
     }
 
-    .log-btn {
-        width: 100% !important;
-        min-height: 52px !important;
-        font-size: 16px !important;
-        margin-top: 0.5rem !important;
-        touch-action: manipulation !important;
+    #word-generation-screen .game-info {
+        padding: 0.3rem !important;
+        margin: 0.1rem 0 !important;
+        flex-shrink: 0 !important;
     }
+
+    #word-generation-screen .game-info p {
+        font-size: 0.65rem !important;
+        margin: 0.2rem 0 !important;
+    }
+}
+
+/* Mobile setup screens optimization */
+.setup-screen {
+    padding: 0.2rem !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.setup-screen .card-content {
+    height: calc(100vh - 0.4rem) !important;
+    max-height: calc(100vh - 0.4rem) !important;
+    padding: 0.5rem !important;
+    justify-content: space-between !important;
+    width: calc(100vw - 0.4rem) !important;
+    max-width: calc(100vw - 0.4rem) !important;
+}
+
+.setup-screen h2 {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.4rem !important;
+    flex-shrink: 0 !important;
+}
+
+.player-slider-container {
+    margin: 0.4rem 0 !important;
+    flex-shrink: 0 !important;
+}
+
+.slider-value-container {
+    font-size: 0.9rem !important;
+    margin-top: 0.4rem !important;
+}
+
+.difficulty-slots,
+.options-grid {
+    gap: 0.4rem !important;
+    margin-top: 0.4rem !important;
+    flex-shrink: 0 !important;
+}
+
+.difficulty-slot-btn,
+.round-slot-btn {
+    padding: 0.6rem 1rem !important;
+    font-size: 0.8rem !important;
+    min-width: 70px !important;
+}
+
+/* Ensure all buttons are always visible */
+.setup-screen .btn {
+    flex-shrink: 0 !important;
+    margin: 0.3rem 0 !important;
+}
+
+/* Mobile error modal improvements */
+.modal-content {
+    width: 95% !important;
+    max-width: 95% !important;
+    padding: 1.5rem !important;
+    margin: 1rem !important;
+    border-radius: 16px !important;
+}
+
+.close-btn {
+    font-size: 2rem !important;
+    padding: 0.5rem !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Mobile team log improvements */
+.team-log {
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.log-input-container {
+    flex-direction: column !important;
+    gap: 0.8rem !important;
+}
+
+.log-input-container input {
+    width: 100% !important;
+    font-size: 16px !important;
+    min-height: 52px !important;
+    padding: 1rem 1.25rem !important;
+}
+
+.mic-btn {
+    min-height: 52px !important;
+    min-width: 52px !important;
+    font-size: 1.5rem !important;
+    touch-action: manipulation !important;
+}
+
+.log-btn {
+    width: 100% !important;
+    min-height: 52px !important;
+    font-size: 16px !important;
+    margin-top: 0.5rem !important;
+    touch-action: manipulation !important;
 }
 
 /* Word generation screen improvements */
@@ -3800,6 +3956,7 @@ Final start game button styling */
     flex: 1;
     overflow: hidden;
     justify-content: space-between;
+    min-height: 0;
 }
 
 .generated-word-display {
@@ -3837,10 +3994,12 @@ Final start game button styling */
 /* Mobile word generation adjustments */
 @media (max-width: 768px) {
     .word-generation-container {
-        gap: 0.8rem;
+        gap: 0.6rem;
         padding: 0 0.5rem;
         height: 100%;
-        justify-content: space-evenly;
+        justify-content: space-between;
+        flex: 1;
+        overflow: hidden;
     }
 
     .word-section {
@@ -3937,7 +4096,8 @@ Final start game button styling */
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    height: calc(100vh - 120px); /* Account for navbar and margins */
+    height: calc(100vh - 120px);
+    /* Account for navbar and margins */
     min-height: 0;
 }
 
@@ -3999,85 +4159,86 @@ Final start game button styling */
     .game-screen {
         padding: 0.8rem;
         margin: 0.25rem;
-        height: calc(100vh - 80px); /* Smaller navbar on mobile */
+        height: calc(100vh - 80px);
+        /* Smaller navbar on mobile */
     }
-    
+
     .game-screen h2 {
         font-size: 1.3rem;
         margin-bottom: 0.8rem;
     }
-    
+
     .current-word-display {
         padding: 0.8rem;
         margin-bottom: 0.8rem;
     }
-    
+
     .current-word-display h3 {
         font-size: 1.1rem;
         margin-bottom: 0.5rem;
     }
-    
+
     #game-current-word {
         font-size: 1.4rem !important;
         padding: 0.6rem 0.8rem;
         min-width: 120px;
         margin: 0.3rem 0;
     }
-    
+
     .current-word-display .word-controls {
         flex-direction: row;
         gap: 0.5rem;
         margin-top: 0.5rem;
     }
-    
+
     .current-word-display .word-controls .btn {
         min-height: 40px;
         font-size: 14px;
         padding: 0.6rem 1rem;
         flex: 1;
     }
-    
+
     .team-log h3 {
         font-size: 1.1rem;
         margin-bottom: 0.6rem;
     }
-    
+
     .log-input-container {
         margin-bottom: 0.6rem;
     }
-    
+
     .log-input-container input {
         font-size: 14px;
         padding: 0.7rem;
         min-height: 44px;
     }
-    
+
     .mic-btn {
         min-height: 44px;
         min-width: 44px;
         font-size: 1.2rem;
     }
-    
+
     .log-btn {
         min-height: 44px;
         font-size: 14px;
         margin-bottom: 0.6rem;
     }
-    
+
     .log-display {
         font-size: 0.85rem;
         padding: 0.6rem;
     }
-    
+
     .log-entry {
         padding: 6px 8px;
         margin-bottom: 3px;
     }
-    
+
     .log-entry .message {
         font-size: 0.85rem;
     }
-    
+
     .log-entry .timestamp {
         font-size: 0.7rem;
     }
@@ -4126,5 +4287,57 @@ Final start game button styling */
     .word-section .word-controls .btn {
         min-height: 48px;
         font-size: 16px;
+    }
+}
+
+/*
+ Critical mobile viewport fixes */
+@media (max-width: 768px) {
+
+    /* Fix mobile viewport height issues */
+    html {
+        height: 100vh;
+        height: -webkit-fill-available;
+    }
+
+    body {
+        height: 100vh;
+        height: -webkit-fill-available;
+    }
+
+    .container {
+        height: 100vh;
+        height: -webkit-fill-available;
+    }
+
+    /* Ensure all setup screens fit perfectly */
+    .setup-screen {
+        height: 100vh !important;
+        height: -webkit-fill-available !important;
+    }
+
+    .setup-screen .card-content {
+        height: calc(100vh - 1rem) !important;
+        height: calc(-webkit-fill-available - 1rem) !important;
+        max-height: calc(100vh - 1rem) !important;
+        max-height: calc(-webkit-fill-available - 1rem) !important;
+    }
+
+    /* Force buttons to stay visible */
+    .setup-screen .btn:last-child {
+        margin-bottom: 0 !important;
+        position: sticky !important;
+        bottom: 0 !important;
+        background: var(--secondary-bg) !important;
+        z-index: 100 !important;
+    }
+
+    /* Specific fix for team setup continue button */
+    #confirm-teams-btn {
+        position: sticky !important;
+        bottom: 0.5rem !important;
+        background: linear-gradient(145deg, var(--text-color-light), var(--text-color-dark)) !important;
+        z-index: 100 !important;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
     }
 }
