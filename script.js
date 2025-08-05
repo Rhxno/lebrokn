@@ -904,7 +904,10 @@ async function startGame() {
     document.querySelectorAll('.setup-screen').forEach(screen => {
         screen.style.display = 'none';
     });
-    document.getElementById('game-container').style.display = 'block';
+    const gameContainer = document.getElementById('game-container');
+    gameContainer.style.display = 'block';
+    gameContainer.style.visibility = 'visible';
+    gameContainer.style.opacity = '1';
     
     // Update team log headers with leader names
     updateTeamLogHeaders();
@@ -1160,18 +1163,39 @@ function showTurnOverlay() {
 }
 
 function updateActiveTeamLog() {
-    document.querySelectorAll('.team-log').forEach(log => {
-        log.style.display = 'none';
-        log.classList.remove('active');
-    });
+    // Check if we're on mobile (screen width <= 768px)
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        // On mobile, show both team logs
+        document.querySelectorAll('.team-log').forEach(log => {
+            log.style.display = 'flex';
+            log.style.opacity = '1';
+        });
+        
+        // Still add active class to current team for styling purposes
+        document.querySelectorAll('.team-log').forEach(log => {
+            log.classList.remove('active');
+        });
+        const activeTeamLog = document.querySelector(`.team-log:nth-child(${currentTeam})`);
+        if (activeTeamLog) {
+            activeTeamLog.classList.add('active');
+        }
+    } else {
+        // On desktop, use original behavior
+        document.querySelectorAll('.team-log').forEach(log => {
+            log.style.display = 'none';
+            log.classList.remove('active');
+        });
 
-    const activeTeamLog = document.querySelector(`.team-log:nth-child(${currentTeam})`);
-    if (activeTeamLog) {
-        activeTeamLog.style.display = 'block';
-        activeTeamLog.classList.add('active');
-
-        console.log(`Switching to Team ${currentTeam}'s log`);
+        const activeTeamLog = document.querySelector(`.team-log:nth-child(${currentTeam})`);
+        if (activeTeamLog) {
+            activeTeamLog.style.display = 'block';
+            activeTeamLog.classList.add('active');
+        }
     }
+
+    console.log(`Switching to Team ${currentTeam}'s log (Mobile: ${isMobile})`);
 }
 
 // --- Referee Logging ---
@@ -1648,13 +1672,31 @@ document.addEventListener('DOMContentLoaded', () => {
         gameToggleButton.addEventListener('click', toggleWordVisibility);
     }
 
-    document.querySelectorAll('.team-log').forEach(log => {
-        log.style.display = 'none';
-    });
-    document.getElementById('team1-word-log').closest('.team-log').style.display = 'block';
+    // Initialize team log visibility based on device type
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+        // On mobile, show both team logs
+        document.querySelectorAll('.team-log').forEach(log => {
+            log.style.display = 'flex';
+            log.style.opacity = '1';
+        });
+    } else {
+        // On desktop, show only team 1 initially
+        document.querySelectorAll('.team-log').forEach(log => {
+            log.style.display = 'none';
+        });
+        document.getElementById('team1-word-log').closest('.team-log').style.display = 'block';
+    }
 
     initializeSpeechRecognition();
     initializeDragAndDrop();
+
+    // Handle window resize for mobile/desktop switching
+    window.addEventListener('resize', () => {
+        if (gameStarted) {
+            updateActiveTeamLog();
+        }
+    });
 
     // Mobile-specific fixes
     if (isMobileDevice()) {
@@ -2402,3 +2444,4 @@ function handleTeamSetupDropToAvailable(playerName) {
     // Add to available players
     availableContainer.appendChild(draggedElement);
 }
+
