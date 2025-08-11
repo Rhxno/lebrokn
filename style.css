@@ -1024,10 +1024,10 @@ body {
     min-height: 0;
 }
 
-/* Initially show both team logs on mobile, hide on desktop */
+/* Initially hide both team logs */
 .team-log {
-    display: flex;
-    opacity: 1;
+    display: none;
+    opacity: 0;
     transition: opacity 0.3s ease-in-out;
     flex: 1;
     overflow: hidden;
@@ -1035,26 +1035,10 @@ body {
     flex-direction: column;
 }
 
-/* Desktop behavior - hide inactive team logs */
-@media (min-width: 769px) {
-    .team-log {
-        display: none;
-        opacity: 0;
-    }
-
-    .team-log.active {
-        display: flex;
-        opacity: 1;
-    }
-}
-
-/* Mobile behavior - show both team logs */
-@media (max-width: 768px) {
-    .team-log {
-        display: flex !important;
-        opacity: 1 !important;
-        margin-bottom: 1rem;
-    }
+/* Show only the active team's log */
+.team-log.active {
+    display: flex;
+    opacity: 1;
 }
 
 .team-log h3 {
@@ -1222,12 +1206,15 @@ body {
     }
 
     .team-log {
-        display: flex !important;
-        flex-direction: column;
         background: var(--secondary-bg);
         padding: 1rem;
         border-radius: var(--border-radius);
         border: 1px solid var(--border-color);
+    }
+
+    .team-log.active {
+        display: flex !important;
+        opacity: 1 !important;
     }
 
     .log-display {
@@ -1290,20 +1277,7 @@ body {
         border: 1px solid var(--border-color) !important;
     }
 
-    /* Ensure all text is visible on mobile */
-    * {
-        color: var(--text-color-light) !important;
-    }
 
-    /* Override any hidden text */
-    h1, h2, h3, h4, h5, h6, p, span, div, input, button {
-        color: var(--text-color-light) !important;
-    }
-
-    /* Make sure backgrounds are visible */
-    .game-screen, .team-log, .current-word-display, .log-display {
-        background: var(--secondary-bg) !important;
-    }
 }
 
 .mic-btn {
@@ -4485,4 +4459,3 @@ Final start game button styling */
         box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
     }
 }
-
