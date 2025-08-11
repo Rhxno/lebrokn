@@ -183,7 +183,8 @@ function initializeSpeechRecognition() {
             const teamNumber = parseInt(button.dataset.team);
             if (gameStarted && teamNumber !== currentTeam) {
                 const currentLeaderName = teamNumber === 1 ? players.team1Leader : players.team2Leader;
-                showErrorModal(`It's not ${currentLeaderName}'s team's turn!`);
+                const teamName = currentLeaderName ? `${currentLeaderName}'s team` : `Team ${teamNumber}`;
+                showErrorModal(`It's not ${teamName}'s turn!`);
                 return;
             }
             targetInput = document.getElementById(`team${teamNumber}-word-log`);
@@ -333,7 +334,8 @@ function initializeDragAndDrop() {
 function handleDragStart(event) {
     if (gameStarted) {
         event.preventDefault();
-        return;
+        event.stopPropagation();
+        return false;
     }
 
     dragState.element = event.target;
@@ -372,7 +374,11 @@ function handleDragLeave(event) {
 
 function handleDrop(event) {
     event.preventDefault();
-    if (gameStarted) return;
+    if (gameStarted) {
+        clearDropZoneHighlights();
+        resetDraggedElement();
+        return;
+    }
 
     const dropZone = event.currentTarget;
     const playerName = event.dataTransfer.getData('text/plain');
@@ -607,7 +613,10 @@ function addTouchSupport(element) {
     };
 
     element.addEventListener('touchstart', (e) => {
-        if (gameStarted) return;
+        if (gameStarted) {
+            e.preventDefault();
+            return;
+        }
         e.preventDefault();
 
         const touch = e.touches[0];
@@ -627,7 +636,10 @@ function addTouchSupport(element) {
     }, { passive: false });
 
     element.addEventListener('touchmove', (e) => {
-        if (gameStarted) return;
+        if (gameStarted) {
+            e.preventDefault();
+            return;
+        }
         e.preventDefault();
 
         const touch = e.touches[0];
@@ -653,7 +665,10 @@ function addTouchSupport(element) {
     }, { passive: false });
 
     element.addEventListener('touchend', (e) => {
-        if (gameStarted) return;
+        if (gameStarted) {
+            e.preventDefault();
+            return;
+        }
         e.preventDefault();
 
         // Clear timers and visual feedback
@@ -690,6 +705,10 @@ function addTouchSupport(element) {
 }
 
 function startTouchDrag(element, touch) {
+    if (gameStarted) {
+        return;
+    }
+
     dragState.element = element;
     dragState.originalParent = element.parentNode;
     dragState.originalIndex = Array.from(dragState.originalParent.children).indexOf(element);
@@ -753,6 +772,14 @@ function updateTouchDropZoneHighlight(touch) {
 }
 
 function endTouchDrag(element, touch) {
+    // Prevent drag and drop during game
+    if (gameStarted) {
+        cleanupTouchDrag(element);
+        clearDropZoneHighlights();
+        resetDraggedElement();
+        return;
+    }
+
     // Find drop target - include team setup specific zones
     const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
     const dropZone = elementBelow?.closest('.players-list, .leader-slot, #available-players, #available-players-setup, #team1-players-setup, #team2-players-setup, #team1-leader-container, #team2-leader-container');
@@ -1146,7 +1173,8 @@ function showTurnOverlay() {
     const teamIndicatorDisplay = document.getElementById('turn-team-indicator');
 
     const currentLeaderName = currentTeam === 1 ? players.team1Leader : players.team2Leader;
-    const currentTeamName = `${currentLeaderName}'s Team`;
+    // Fix null team leader issue
+    const currentTeamName = currentLeaderName ? `${currentLeaderName}'s Team` : `Team ${currentTeam}`;
     const currentPlayerName = currentGuesser;
     const teamColor = currentTeam === 1 ? 'var(--team1-color)' : 'var(--team2-color)';
 
@@ -1181,7 +1209,8 @@ function updateActiveTeamLog() {
 function logWord(teamNumber) {
     if (teamNumber !== currentTeam) {
         const teamLeaderName = teamNumber === 1 ? players.team1Leader : players.team2Leader;
-        showErrorModal(`It's not ${teamLeaderName}'s team's turn!`);
+        const teamName = teamLeaderName ? `${teamLeaderName}'s team` : `Team ${teamNumber}`;
+        showErrorModal(`It's not ${teamName}'s turn!`);
         return;
     }
 
