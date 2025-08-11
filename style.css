@@ -1165,119 +1165,309 @@ body {
     margin-bottom: 0;
 }
 
-/* Mobile-specific game container fixes */
+/* Mobile-specific fixes - only for game screen, not setup screens */
 @media (max-width: 768px) {
+
+    /* Fix mobile viewport height issues */
+    html {
+        height: 100vh;
+        height: -webkit-fill-available;
+    }
+
+    body {
+        height: 100vh;
+        height: -webkit-fill-available;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    /* Game container - only when game is actually running */
     #game-container {
-        display: flex !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        height: -webkit-fill-available;
+        max-width: 100vw;
+        max-height: 100vh;
+        max-height: -webkit-fill-available;
+        overflow: hidden;
+        display: flex;
         flex-direction: column;
-        width: 100vw !important;
-        height: 100vh !important;
-        overflow-x: hidden;
-        overflow-y: auto;
-        position: relative;
         background: var(--primary-bg);
+        box-sizing: border-box;
+    }
+
+    #game-container .navbar {
+        flex-shrink: 0;
+        height: 60px;
+        min-height: 60px;
+        padding: 0.8rem 1.5rem;
+        box-sizing: border-box;
     }
 
     #game-container main {
         flex: 1;
-        padding: 0.5rem;
-        overflow-y: auto;
+        min-height: 0;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
+        padding: 0.5rem;
+        box-sizing: border-box;
     }
 
     .game-screen {
         flex: 1;
-        display: flex !important;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
         flex-direction: column;
-        background: var(--card-bg) !important;
-        color: var(--text-color-light) !important;
-        padding: 1rem !important;
-        margin: 0 !important;
-        border-radius: var(--border-radius);
-    }
-
-    .team-logs {
-        flex: 1;
-        display: flex !important;
-        flex-direction: column;
-        gap: 1rem;
-        min-height: 200px;
-    }
-
-    .team-log {
-        background: var(--secondary-bg);
+        background: var(--card-bg);
+        color: var(--text-color-light);
         padding: 1rem;
+        margin: 0;
         border-radius: var(--border-radius);
-        border: 1px solid var(--border-color);
+        box-sizing: border-box;
     }
 
-    .team-log.active {
-        display: flex !important;
-        opacity: 1 !important;
-    }
-
-    .log-display {
-        min-height: 100px !important;
-        background: var(--tertiary-bg) !important;
-        color: var(--text-color-light) !important;
-        padding: 0.8rem !important;
-        border-radius: var(--border-radius);
-        overflow-y: auto;
+    .game-screen h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        flex-shrink: 0;
+        text-align: center;
+        color: var(--text-color-light);
     }
 
     .current-word-display {
-        background: var(--secondary-bg);
-        padding: 1rem;
-        border-radius: var(--border-radius);
+        flex-shrink: 0;
         margin-bottom: 1rem;
+        padding: 1rem;
+        background: var(--secondary-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
         text-align: center;
     }
 
     .current-word-display h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
         color: var(--text-color-light);
+    }
+
+    .current-word-display .word-display,
+    #game-current-word {
+        font-size: 1.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--tertiary-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        color: var(--text-color-light);
+        display: inline-block;
+        min-width: 150px;
+        max-width: 85vw;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        box-sizing: border-box;
+    }
+
+    .word-controls {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .word-controls .btn {
+        padding: 0.7rem 1.2rem;
+        font-size: 0.9rem;
+        min-height: 44px;
+    }
+
+    /* Team logs - the chat area */
+    .team-logs {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .team-log {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        display: none;
+        flex-direction: column;
+        background: var(--secondary-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        box-sizing: border-box;
+    }
+
+    .team-log.active {
+        display: flex;
+        opacity: 1;
+    }
+
+    .team-log h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.8rem;
+        flex-shrink: 0;
+        text-align: center;
+        color: var(--text-color-light);
+    }
+
+    .log-input-container {
+        flex-shrink: 0;
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .log-input-container input[type="text"] {
+        flex: 1;
+        font-size: 16px;
+        /* Prevent zoom on iOS */
+        padding: 0.8rem;
+        min-height: 44px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background: var(--tertiary-bg);
+        color: var(--text-color-light);
+        box-sizing: border-box;
+    }
+
+    .mic-btn {
+        flex-shrink: 0;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0.8rem;
+        font-size: 1.2rem;
+        border-radius: var(--border-radius);
+    }
+
+    .btn.log-btn {
+        flex-shrink: 0;
+        width: 100%;
+        min-height: 44px;
+        padding: 0.8rem 1.5rem;
+        font-size: 0.9rem;
+        margin-bottom: 0.8rem;
+        border-radius: var(--border-radius);
+    }
+
+    /* CRITICAL: Log display - the actual chat log area */
+    .log-display {
+        flex: 1;
+        min-height: 200px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        background: var(--tertiary-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 0.7rem;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        color: var(--text-color-light);
+        box-sizing: border-box;
+        white-space: pre-line;
+    }
+
+    /* Log entries */
+    .log-entry {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        margin-bottom: 5px;
+        background: var(--quaternary-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .log-entry .message {
+        flex: 1;
+        margin-right: 10px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .log-entry .timestamp {
+        font-size: 0.75em;
+        color: rgba(255, 255, 255, 0.5);
+        white-space: nowrap;
+        min-width: 60px;
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    /* Prevent zoom on input focus */
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+        font-size: 16px !important;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    /* Ensure buttons are touch-friendly */
+    .btn {
+        min-height: 44px !important;
+        min-width: 44px !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    /* Turn overlay and confirmation dialog adjustments */
+    .turn-overlay {
+        padding: 1rem;
+    }
+
+    .turn-message {
+        max-width: 90vw;
+        padding: 1.5rem;
+    }
+
+    .turn-message h2 {
+        font-size: 1.5rem;
         margin-bottom: 0.5rem;
     }
 
-    .current-word-display .word-display {
-        color: var(--text-color-light) !important;
-        background: var(--tertiary-bg) !important;
-        padding: 0.8rem;
-        border-radius: var(--border-radius);
-        margin: 0.5rem 0;
+    .turn-message p {
+        font-size: 1rem;
     }
 
-    /* Ensure game container is visible on mobile */
-    #game-container[style*="display: block"] {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+    #confirmation-dialog .turn-message {
+        max-width: 90vw;
+        padding: 1.5rem;
     }
 
-    /* Force visibility of game elements on mobile */
-    .game-screen.card {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+    #confirmation-dialog h2 {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
     }
 
-    /* Ensure team log content is visible */
-    .team-log h3,
-    .team-log input,
-    .team-log button,
-    .log-display {
-        color: var(--text-color-light) !important;
-        background: var(--secondary-bg) !important;
-        border-color: var(--border-color) !important;
+    .confirmation-buttons {
+        gap: 1rem;
+        flex-wrap: wrap;
     }
 
-    .team-log input[type="text"] {
-        background: var(--tertiary-bg) !important;
-        color: var(--text-color-light) !important;
-        border: 1px solid var(--border-color) !important;
+    .confirmation-buttons .btn {
+        flex: 1;
+        min-width: 100px;
+        padding: 0.8rem 1.2rem;
+        font-size: 0.9rem;
     }
-
-
 }
 
 .mic-btn {
@@ -3035,11 +3225,11 @@ Word Hide/Show Effects */
 /* Progress Indicator */
 .setup-progress {
     position: fixed;
-    top: 2rem;
+    top: 1rem;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 1rem;
+    gap: 0.8rem;
     z-index: 1002;
 }
 
@@ -3113,10 +3303,14 @@ Word Hide/Show Effects */
     .setup-screen .card-content {
         padding: 2rem;
         margin: 1rem;
+        padding-top: 3rem;
+        /* Add extra top padding to avoid progress dots */
     }
 
     .setup-screen h2 {
         font-size: 2.2rem;
+        margin-top: 1rem;
+        /* Add top margin to separate from progress dots */
     }
 
     .difficulty-slots,
@@ -3129,6 +3323,17 @@ Word Hide/Show Effects */
     .round-slot-btn {
         width: 100%;
         max-width: 300px;
+    }
+
+    /* Mobile progress indicator adjustments */
+    .setup-progress {
+        top: 0.5rem;
+        gap: 0.6rem;
+    }
+
+    .progress-dot {
+        width: 10px;
+        height: 10px;
     }
 }
 
@@ -3486,6 +3691,8 @@ Word Hide/Show Effects */
         max-height: calc(100vh - 0.5rem) !important;
         overflow: hidden !important;
         padding: 0.4rem !important;
+        padding-top: 2.5rem !important;
+        /* Extra top padding to avoid progress dots */
         margin: 0 !important;
         width: calc(100vw - 0.5rem) !important;
         max-width: calc(100vw - 0.5rem) !important;
@@ -3498,6 +3705,8 @@ Word Hide/Show Effects */
     #team-setup-screen h2 {
         font-size: 1.1rem !important;
         margin-bottom: 0.4rem !important;
+        margin-top: 0 !important;
+        /* Remove top margin since we have padding */
         flex-shrink: 0 !important;
     }
 
