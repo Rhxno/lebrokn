@@ -1540,12 +1540,19 @@ function selectDifficulty(difficulty) {
     console.log('Difficulty selected:', difficulty);
     gameDifficulty = difficulty;
 
+    // Clear previous selections
+    document.querySelectorAll('.difficulty-slot-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        btn.style.transform = '';
+        btn.style.background = '';
+        btn.style.color = '';
+    });
+
     // Add visual feedback for selected difficulty
     const selectedBtn = event.target;
     if (selectedBtn) {
+        selectedBtn.classList.add('selected');
         selectedBtn.style.transform = 'scale(0.95)';
-        selectedBtn.style.background = 'var(--text-color-light)';
-        selectedBtn.style.color = 'var(--primary-bg)';
     }
 
     setTimeout(() => {
