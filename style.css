@@ -142,16 +142,18 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
     width: 100%;
-    max-width: 500px;
+    max-width: 95vw;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1.5rem 1rem;
     background: var(--card-bg);
-    border-radius: var(--border-radius);
+    border-radius: 12px;
     border: 1px solid var(--border-color);
     box-shadow: var(--card-shadow);
     box-sizing: border-box;
+    min-height: auto;
+    flex-shrink: 0;
 }
 
 .card-content h2 {
@@ -305,34 +307,36 @@ body {
     letter-spacing: 1.5px;
 }
 
-/* Modern Setup Screen System */
+/* Modern Setup Screen System - Mobile First */
 .setup-screen {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
+    height: -webkit-fill-available !important;
     display: none;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
-    overflow: hidden !important;
-    /* No scrolling allowed */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     transform: translateX(100%);
     opacity: 0;
     z-index: 1000;
-    padding: 0.5rem;
+    padding: 1rem 0.5rem;
     box-sizing: border-box;
 }
 
 /* Mobile-specific setup screen fixes */
 @media (max-width: 768px) {
     .setup-screen {
-        padding: 1rem;
-        justify-content: center;
+        padding: 0.5rem;
+        justify-content: flex-start;
         align-items: center;
+        padding-top: 1rem;
     }
 
     .setup-screen h2 {
@@ -373,14 +377,14 @@ body {
         border-radius: 12px !important;
     }
 
-    /* Fix hard button styling */
-    .difficulty-slot-btn:nth-child(3) {
+    /* Ensure all difficulty buttons have consistent styling */
+    .difficulty-slot-btn {
         background: var(--btn-primary) !important;
         color: var(--primary-bg) !important;
         border-color: var(--btn-primary) !important;
     }
 
-    .difficulty-slot-btn:nth-child(3):hover {
+    .difficulty-slot-btn:hover {
         background: var(--text-color-dark) !important;
         color: var(--primary-bg) !important;
         border-color: var(--text-color-dark) !important;
@@ -738,35 +742,36 @@ body {
     box-sizing: border-box;
 }
 
-/* Team Setup Screen Styles */
+/* Team Setup Screen Styles - Mobile First */
 .team-setup-container {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1rem;
     width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 1rem;
+    max-width: 100%;
+    margin: 0;
+    padding: 0.5rem;
     box-sizing: border-box;
+    height: auto;
+    overflow-y: auto;
 }
 
 .add-player-section {
     display: flex;
-    gap: 1rem;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 0.8rem;
+    width: 100%;
+    margin-bottom: 1rem;
 }
 
 .add-player-section input[type="text"] {
-    flex: 1;
-    min-width: 200px;
-    padding: 0.8rem;
+    width: 100%;
+    padding: 1rem;
     border: 2px solid var(--border-color);
-    border-radius: var(--border-radius);
+    border-radius: 8px;
     background: var(--secondary-bg);
     color: var(--text-color-light);
-    font-size: 1rem;
+    font-size: 16px; /* Prevent zoom on iOS */
     box-sizing: border-box;
 }
 
@@ -779,37 +784,44 @@ body {
 .players-setup {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1rem;
+    flex: 1;
+    min-height: 0;
 }
 
 .available-players-section {
     text-align: center;
+    margin-bottom: 1rem;
 }
 
 .available-players-section h3 {
     color: var(--text-color-light);
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+    font-size: 1.1rem;
 }
 
 .teams-setup {
-    display: flex;
-    gap: 2rem;
-    justify-content: space-between;
-}
-
-.team-setup {
-    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
+.team-setup {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
 .team-setup h3 {
     color: var(--text-color-light);
     text-align: center;
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
+    margin: 0 0 0.8rem 0;
+    font-size: 1.1rem;
 }
 
 .leader-slot {
@@ -818,19 +830,20 @@ body {
     align-items: center;
     gap: 0.5rem;
     border: 2px solid #ffd700;
-    border-radius: var(--border-radius);
-    padding: 1rem;
+    border-radius: 8px;
+    padding: 0.8rem;
     background-color: rgba(255, 215, 0, 0.1);
-    min-height: 80px;
+    min-height: 60px;
     transition: all 0.3s ease;
 }
 
 .leader-label {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: #ffd700;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin: 0;
 }
 
 .leader-container {
@@ -839,6 +852,12 @@ body {
     justify-content: center;
     align-items: center;
     width: 100%;
+    min-height: 40px;
+}
+
+/* Mobile instruction - hidden on desktop */
+.mobile-instruction {
+    display: none;
 }
 
 /* Game Setup Section */
@@ -887,16 +906,15 @@ body {
     text-align: center;
 }
 
-/* Players List Styles (Available, Team 1, Team 2) */
+/* Players List Styles (Available, Team 1, Team 2) - Mobile First */
 .players-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    min-height: 80px;
-    /* Larger drop zone for mobile */
-    padding: 1rem;
+    min-height: 60px;
+    padding: 0.8rem;
     border: 2px solid #607d8b;
-    border-radius: var(--border-radius);
+    border-radius: 8px;
     background-color: #37474f;
     touch-action: none;
     -webkit-overflow-scrolling: touch;
@@ -918,88 +936,99 @@ body {
         border-width: 3px;
     }
 
-    /* Team setup mobile fixes */
+    /* Team setup mobile fixes - Optimized for mobile screens */
+    #team-setup-screen .card-content {
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+        padding: 1rem 0.8rem;
+        gap: 0.8rem;
+    }
+
+    #team-setup-screen h2 {
+        font-size: 1.4rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
     .team-setup-container {
-        padding: 0.5rem;
-        gap: 1rem;
+        padding: 0;
+        gap: 0.8rem;
+        width: 100%;
+        height: auto;
     }
 
     .add-player-section {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        margin-bottom: 2rem;
+        gap: 0.8rem;
+        margin-bottom: 1rem;
     }
 
     .add-player-section input[type="text"] {
-        width: 100%;
-        padding: 1rem;
+        padding: 0.9rem;
         font-size: 16px; /* Prevent zoom on iOS */
         border-radius: 8px;
-        border: 2px solid var(--border-color);
-        background: var(--secondary-bg);
-        color: var(--text-color-light);
-        box-sizing: border-box;
     }
 
     .add-player-section button {
-        width: 100%;
-        padding: 1rem;
-        font-size: 1rem;
+        padding: 0.9rem;
+        font-size: 0.95rem;
     }
 
     .players-setup {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
+        gap: 1rem;
     }
 
-    .available-players-section {
-        order: 1;
+    .available-players-section h3 {
+        font-size: 1rem;
+        margin-bottom: 0.6rem;
     }
 
     .teams-setup {
-        order: 2;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
+        gap: 1rem;
     }
 
     .team-setup {
-        width: 100%;
-        padding: 1rem;
-        background: var(--card-bg);
-        border-radius: var(--border-radius);
-        border: 1px solid var(--border-color);
+        padding: 0.8rem;
+        border-radius: 8px;
     }
 
     .team-setup h3 {
-        font-size: 1.2rem;
-        margin-bottom: 1rem;
-        text-align: center;
+        font-size: 1rem;
+        margin-bottom: 0.6rem;
     }
 
     .leader-slot {
-        margin: 0.5rem 0;
-        min-height: 70px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        margin: 0.4rem 0;
+        min-height: 55px;
+        padding: 0.6rem;
     }
 
     .leader-label {
-        font-size: 0.9rem;
-        margin-bottom: 0.5rem;
-        color: var(--text-color-muted);
+        font-size: 0.8rem;
+        margin-bottom: 0.3rem;
     }
 
     .leader-container {
-        width: 100%;
+        min-height: 35px;
+    }
+
+    .players-list {
         min-height: 50px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        padding: 0.6rem;
+    }
+
+    .player {
+        padding: 0.6rem 0.8rem;
+        margin: 0.2rem;
+        font-size: 0.9rem;
+        min-height: 36px;
+    }
+
+    .mobile-instruction {
+        display: block;
+        color: var(--text-color-muted);
+        font-size: 0.85rem;
+        text-align: center;
+        margin: 0.5rem 0;
+        font-style: italic;
     }
 }
 
