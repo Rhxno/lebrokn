@@ -9,8 +9,7 @@ let players = {
 
 let currentWord = '';
 let currentTeam = 1;
-let currentGuesser = null;
-let currentHintGiver = null;
+// Removed unused variables: currentGuesser, currentHintGiver
 let gameLog = [];
 let totalRounds = 1;
 let currentRound = 0;
@@ -219,105 +218,9 @@ function stopListeningUIUpdate() {
 }
 
 // --- Player Management ---
-function addPlayer() {
-    // This function is deprecated - we now use the DOM-based team setup system
-    console.warn('addPlayer() called - this function is deprecated. Use addPlayerToSetup() instead.');
-    
-    if (gameStarted) {
-        console.warn('Game already started, ignoring addPlayer call');
-        return;
-    }
+// Removed deprecated addPlayer() function - using DOM-based team setup system
 
-    // Check if we're in the new team setup mode
-    const teamSetupScreen = document.getElementById('team-setup-screen');
-    if (teamSetupScreen && teamSetupScreen.classList.contains('active')) {
-        console.warn('Team setup screen is active, ignoring old addPlayer call');
-        return;
-    }
-
-    const playerNameInput = document.getElementById('player-name');
-    if (!playerNameInput) {
-        console.warn('Old player name input not found, ignoring addPlayer call');
-        return;
-    }
-    
-    const playerName = playerNameInput.value.trim();
-
-    if (!playerName) return; // Don't add empty names
-
-    const nameExists = players.available.includes(playerName) ||
-        players.team1.includes(playerName) ||
-        players.team2.includes(playerName) ||
-        players.team1Leader === playerName ||
-        players.team2Leader === playerName;
-
-    if (nameExists) {
-        showErrorModal('A player with this name already exists!');
-        return;
-    }
-
-    if (players.available.length >= numberOfPlayers) {
-        showErrorModal(`You can only add ${numberOfPlayers} players!`);
-        return;
-    }
-
-    players.available.push(playerName);
-    playerNameInput.value = '';
-    updateAvailablePlayersDisplay();
-}
-
-function updateAvailablePlayers() {
-    const availablePlayersElement = document.getElementById('available-players-setup');
-    if (!availablePlayersElement) {
-        console.warn('Available players element not found');
-        return;
-    }
-    availablePlayersElement.innerHTML = '';
-    players.available.forEach(playerId => {
-        const playerElement = document.getElementById(playerId);
-        if (playerElement) {
-            availablePlayersElement.appendChild(playerElement);
-        }
-    });
-}
-
-function updateTeamPlayers() {
-    ['team1', 'team2'].forEach(team => {
-        const teamPlayersElement = document.getElementById(`${team}-players`);
-        teamPlayersElement.innerHTML = '';
-        players[team].forEach(playerId => {
-            const playerElement = document.getElementById(playerId);
-            teamPlayersElement.appendChild(playerElement);
-        });
-    });
-}
-
-function updatePlayerDropdowns() {
-    const playerSelect1 = document.getElementById('team1-player-select');
-    const playerSelect2 = document.getElementById('team2-player-select');
-
-    if (!playerSelect1 || !playerSelect2) {
-        console.error("Player select elements not found.");
-        return;
-    }
-
-    playerSelect1.innerHTML = '';
-    playerSelect2.innerHTML = '';
-
-    players.team1.forEach(player => {
-        const option = document.createElement('option');
-        option.value = player;
-        option.textContent = player;
-        playerSelect1.appendChild(option);
-    });
-
-    players.team2.forEach(player => {
-        const option = document.createElement('option');
-        option.value = player;
-        option.textContent = player;
-        playerSelect2.appendChild(option);
-    });
-}
+// Removed deprecated player management functions - using DOM-based system
 
 // --- Modern Drag and Drop System ---
 function initializeDragAndDrop() {
