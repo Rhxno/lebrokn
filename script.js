@@ -1536,7 +1536,7 @@ function selectRounds(rounds) {
     transitionToScreen('round-select-screen', 'team-setup-screen');
 }
 
-function selectDifficulty(difficulty) {
+function selectDifficulty(difficulty, event) {
     console.log('Difficulty selected:', difficulty);
     gameDifficulty = difficulty;
 
@@ -1549,7 +1549,7 @@ function selectDifficulty(difficulty) {
     });
 
     // Add visual feedback for selected difficulty
-    const selectedBtn = event.target;
+    const selectedBtn = event ? event.target : document.querySelector(`[onclick*="${difficulty}"]`);
     if (selectedBtn) {
         selectedBtn.classList.add('selected');
         selectedBtn.style.transform = 'scale(0.95)';
