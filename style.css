@@ -482,11 +482,7 @@ body {
     /* Subtle text shadow */
 }
 
-/* Remove or modify existing styles for .player-slots and .player-slot-btn if they are no longer needed or conflict */
-.player-slots,
-.player-slot-btn {
-    display: none !important;
-}
+/* Removed unused player slots styles */
 
 /* Player Slider Styles */
 .player-slider-container {
@@ -1074,20 +1070,7 @@ body {
     transition: all 0.2s ease;
 }
 
-.players-list,
-.leader-slot {
-    min-height: 50px;
-    border: 2px solid #ccc;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 5px;
-}
-
-.players-list:hover,
-.leader-slot:hover {
-    border-color: #666;
-    background-color: rgba(255, 255, 255, 0.1);
-}
+/* Removed duplicate players-list and leader-slot base styles - using main definitions */
 
 .players-list .player {
     background: var(--tertiary-bg);
@@ -1103,22 +1086,6 @@ body {
     text-overflow: ellipsis;
     max-width: 100%;
     transition: all var(--transition-duration) var(--transition-easing);
-}
-
-.player {
-    cursor: move;
-    padding: 12px 16px;
-    /* Larger touch target */
-    margin: 8px;
-    background-color: #4a5568;
-    border-radius: 4px;
-    display: inline-block;
-    touch-action: none;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-    box-sizing: border-box;
-    /* <<< ADD THIS LINE */
 }
 
 .player {
