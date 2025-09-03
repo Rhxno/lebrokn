@@ -838,7 +838,7 @@ async function startGame() {
     gameContainer.style.display = 'block';
     gameContainer.style.visibility = 'visible';
     gameContainer.style.opacity = '1';
-    
+
     // Update team log headers with leader names
     updateTeamLogHeaders();
 
@@ -877,7 +877,7 @@ async function generateNewWord() {
         showErrorModal('Cannot generate new word during gameplay! The word has already been chosen.');
         return;
     }
-    
+
     try {
         currentWord = await fetchRandomWord();
         const wordElement = document.getElementById('current-word');
@@ -893,7 +893,7 @@ async function generateNewWord() {
             wordElement.style.border = '1px solid var(--border-color)';
             wordElement.classList.remove('word-hidden');
             isWordVisible = true;
-            
+
             // Adjust font size for long words on mobile
             adjustWordFontSize(wordElement, currentWord);
 
@@ -910,7 +910,7 @@ async function generateNewWord() {
             gameWordElement.style.color = 'var(--text-color-light)';
             gameWordElement.style.border = '1px solid var(--border-color)';
             gameWordElement.classList.remove('word-hidden');
-            
+
             // Adjust font size for long words on mobile
             adjustWordFontSize(gameWordElement, currentWord);
         }
@@ -922,10 +922,10 @@ async function generateNewWord() {
 // Function to adjust font size based on word length
 function adjustWordFontSize(element, word) {
     if (!element || !word) return;
-    
+
     const isMobile = window.innerWidth <= 768;
     const wordLength = word.length;
-    
+
     if (isMobile) {
         if (wordLength <= 6) {
             element.style.fontSize = '1.3rem';
@@ -953,33 +953,33 @@ function adjustWordFontSize(element, word) {
 function updateTeamLogHeaders() {
     const team1LogHeader = document.querySelector('.team-log:first-child h3');
     const team2LogHeader = document.querySelector('.team-log:last-child h3');
-    
+
     if (team1LogHeader && players.team1Leader) {
         team1LogHeader.textContent = `${players.team1Leader}'s Team Log`;
     }
-    
+
     if (team2LogHeader && players.team2Leader) {
         team2LogHeader.textContent = `${players.team2Leader}'s Team Log`;
     }
-    
+
     // Also update placeholders and aria labels
     const team1Input = document.getElementById('team1-word-log');
     const team2Input = document.getElementById('team2-word-log');
     const team1MicBtn = document.getElementById('mic-btn-1');
     const team2MicBtn = document.getElementById('mic-btn-2');
-    
+
     if (team1Input && players.team1Leader) {
         team1Input.placeholder = `Enter word for ${players.team1Leader}'s team`;
     }
-    
+
     if (team2Input && players.team2Leader) {
         team2Input.placeholder = `Enter word for ${players.team2Leader}'s team`;
     }
-    
+
     if (team1MicBtn && players.team1Leader) {
         team1MicBtn.setAttribute('aria-label', `Use Microphone for ${players.team1Leader}'s team`);
     }
-    
+
     if (team2MicBtn && players.team2Leader) {
         team2MicBtn.setAttribute('aria-label', `Use Microphone for ${players.team2Leader}'s team`);
     }
@@ -1004,7 +1004,7 @@ function toggleWordVisibility() {
     const gameToggleButton = document.getElementById('game-toggle-word-btn');
 
     isWordVisible = !isWordVisible;
-    
+
     // Add haptic feedback for mobile
     if (navigator.vibrate && isMobileDevice()) {
         navigator.vibrate(50);
@@ -1219,78 +1219,195 @@ function endGame() {
         gameScreen.style.display = 'none';
     }
 
+    // Calculate game statistics
     const correctGuesses = gameLog.filter(entry => entry.type === 'correct-guess');
-    document.getElementById('guess-results').innerHTML = correctGuesses.map(guess => `
-        <div class="result-item">
-            <span>${guess.player} (Team ${guess.team})</span>
-            <span>${guess.word}</span>
-        </div>
-    `).join('');
+    const totalWords = gameLog.filter(entry => entry.type === 'word-generated').length;
+    const team1Correct = correctGuesses.filter(guess => guess.team === 1).length;
+    const team2Correct = correctGuesses.filter(guess => guess.team === 2).length;
+    const team1Hints = gameLog.filter(entry => entry.type === 'hint' && entry.team === 1).length;
+    const team2Hints = gameLog.filter(entry => entry.type === 'hint' && entry.team === 2).length;
+    const successRate = totalWords > 0 ? Math.round((correctGuesses.length / totalWords) * 100) : 0;
 
-    const hintResults = calculateHintEffectiveness();
-    document.getElementById('hint-results').innerHTML = hintResults.map(hint => `
-        <div class="result-item">
-            <span>${hint.player} (Team ${hint.team})</span>
-            <span>${hint.effectiveness.toFixed(1)}%</span>
-        </div>
-    `).join('');
+    // Update summary statistics
+    document.getElementById('total-words').textContent = totalWords;
+    document.getElementById('correct-count').textContent = correctGuesses.length;
+    document.getElementById('success-rate').textContent = `${successRate}%`;
+
+    // Update team statistics
+    document.getElementById('team1-correct').textContent = team1Correct;
+    document.getElementById('team1-hints').textContent = team1Hints;
+    document.getElementById('team2-correct').textContent = team2Correct;
+    document.getElementById('team2-hints').textContent = team2Hints;
+
+    // Determine and display winner
+    const winningTeam = document.getElementById('winning-team');
+    const winnerText = document.getElementById('winner-text');
+    const winnerMessage = document.getElementById('winner-message');
+
+    if (team1Correct > team2Correct) {
+        winnerText.textContent = '🏆 Team 1 Wins!';
+        winnerMessage.textContent = `Team 1 guessed ${team1Correct} words correctly!`;
+        document.getElementById('team1-result').classList.add('winner');
+        winningTeam.style.display = 'block';
+    } else if (team2Correct > team1Correct) {
+        winnerText.textContent = '🏆 Team 2 Wins!';
+        winnerMessage.textContent = `Team 2 guessed ${team2Correct} words correctly!`;
+        document.getElementById('team2-result').classList.add('winner');
+        winningTeam.style.display = 'block';
+    } else {
+        winnerText.textContent = '🤝 It\'s a Tie!';
+        winnerMessage.textContent = `Both teams guessed ${team1Correct} words correctly!`;
+        document.getElementById('team1-result').classList.add('tie');
+        document.getElementById('team2-result').classList.add('tie');
+        winningTeam.style.display = 'block';
+    }
+
+    // Display detailed game log
+    const detailedLog = document.getElementById('detailed-log');
+    const logEntries = gameLog.filter(entry => entry.type === 'correct-guess' || entry.type === 'hint');
+
+    detailedLog.innerHTML = logEntries.map(entry => {
+        const icon = entry.type === 'correct-guess' ? '✅' : '💡';
+        const typeText = entry.type === 'correct-guess' ? 'Guessed' : 'Hinted';
+        return `
+            <div class="log-entry ${entry.type}">
+                <span class="log-icon">${icon}</span>
+                <span class="log-text">
+                    <strong>${entry.player}</strong> (Team ${entry.team}) ${typeText}: 
+                    <em>"${entry.word}"</em>
+                </span>
+            </div>
+        `;
+    }).join('');
 }
 
-function calculateHintEffectiveness() {
-    const hintStats = {};
+// Removed hint effectiveness calculation functions - no longer needed
 
-    gameLog.filter(entry => entry.type === 'hint').forEach(entry => {
-        if (!hintStats[entry.player]) {
-            hintStats[entry.player] = {
-                total: 0,
-                effective: 0,
-                team: entry.team
-            };
-        }
+// New game control functions
+function startNewGame() {
+    // Reset game state but keep teams
+    gameLog = [];
+    currentRound = 0;
+    currentWord = '';
+    gameStarted = false;
+    
+    // Reset team result classes
+    document.getElementById('team1-result').classList.remove('winner', 'tie');
+    document.getElementById('team2-result').classList.remove('winner', 'tie');
 
-        hintStats[entry.player].total++;
-        if (isEffectiveHint(entry.word)) {
-            hintStats[entry.player].effective++;
+    // Hide results and show game container properly
+    const resultsSection = document.getElementById('results');
+    const gameContainer = document.getElementById('game-container');
+    
+    resultsSection.style.display = 'none';
+    resultsSection.classList.remove('show');
+    
+    // Show game container with proper visibility
+    gameContainer.style.display = 'flex';
+    gameContainer.style.visibility = 'visible';
+    gameContainer.style.opacity = '1';
+
+    // Clear team logs
+    document.getElementById('team1-word-display').innerHTML = '';
+    document.getElementById('team2-word-display').innerHTML = '';
+
+    // Reset current team and player indices
+    currentTeam = 1;
+    currentPlayerIndex = { 1: 0, 2: 0 };
+
+    // Generate new word and start game
+    generateNewWord().then(() => {
+        startGame();
+    });
+
+    console.log('Starting new game with same teams');
+}
+
+function backToSetup() {
+    // Reset everything and go back to player selection
+    gameLog = [];
+    currentRound = 0;
+    currentWord = '';
+    gameStarted = false;
+    numberOfPlayers = 0;
+    gameDifficulty = 'easy';
+    totalRounds = 1;
+
+    // Reset players
+    players = {
+        available: [],
+        team1: [],
+        team2: [],
+        team1Leader: null,
+        team2Leader: null
+    };
+
+    // Reset team result classes
+    document.getElementById('team1-result').classList.remove('winner', 'tie');
+    document.getElementById('team2-result').classList.remove('winner', 'tie');
+
+    // Hide game and results completely
+    const gameContainer = document.getElementById('game-container');
+    const resultsSection = document.getElementById('results');
+    
+    gameContainer.style.display = 'none';
+    gameContainer.style.visibility = 'hidden';
+    gameContainer.style.opacity = '0';
+    
+    resultsSection.style.display = 'none';
+    resultsSection.classList.remove('show');
+
+    // Reset all setup screens
+    document.querySelectorAll('.setup-screen').forEach(screen => {
+        screen.classList.remove('active');
+        screen.style.display = 'none';
+        screen.style.opacity = '0';
+        screen.style.transform = 'translateX(100%)';
+    });
+
+    // Show first setup screen properly
+    const playerSelectScreen = document.getElementById('player-select-screen');
+    playerSelectScreen.classList.add('active');
+    playerSelectScreen.style.display = 'flex';
+    playerSelectScreen.style.opacity = '1';
+    playerSelectScreen.style.transform = 'translateX(0)';
+    playerSelectScreen.style.visibility = 'visible';
+
+    // Reset slider values
+    const playerSlider = document.getElementById('player-slider-input');
+    const sliderValue = document.getElementById('slider-value');
+    if (playerSlider && sliderValue) {
+        playerSlider.value = 4;
+        sliderValue.textContent = '4';
+    }
+
+    const roundSlider = document.getElementById('round-slider-input');
+    const roundSliderValue = document.getElementById('round-slider-value');
+    if (roundSlider && roundSliderValue) {
+        roundSlider.value = 1;
+        roundSliderValue.textContent = '1';
+    }
+
+    // Clear team setup containers
+    const containers = [
+        'available-players-setup',
+        'team1-leader-container',
+        'team2-leader-container',
+        'team1-players-setup',
+        'team2-players-setup'
+    ];
+    
+    containers.forEach(containerId => {
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = '';
         }
     });
 
-    return Object.entries(hintStats).map(([player, stats]) => ({
-        player,
-        team: stats.team,
-        effectiveness: (stats.effective / stats.total) * 100 || 0
-    })).sort((a, b) => b.effectiveness - a.effectiveness);
+    console.log('Returning to setup');
 }
 
-function isEffectiveHint(word) {
-    const cleanWord = word.replace(/[^A-Z]/g, '');
-    const cleanPassword = currentWord.replace(/[^A-Z]/g, '');
-
-    return cleanWord === cleanPassword ||
-        cleanPassword.includes(cleanWord) ||
-        cleanWord.includes(cleanPassword) ||
-        calculateSimilarity(cleanWord, cleanPassword) > 0.4;
-}
-
-function calculateSimilarity(a, b) {
-    const longer = a.length > b.length ? a : b;
-    const matrix = Array(a.length + 1).fill().map(() => Array(b.length + 1).fill(0));
-
-    for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
-    for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
-
-    for (let i = 1; i <= a.length; i++) {
-        for (let j = 1; j <= b.length; j++) {
-            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-            matrix[i][j] = Math.min(
-                matrix[i - 1][j] + 1,
-                matrix[i][j - 1] + 1,
-                matrix[i - 1][j - 1] + cost
-            );
-        }
-    }
-
-    return 1 - (matrix[a.length][b.length] / longer.length);
-}
+// Removed incomplete calculateSimilarity function - no longer needed
 
 // --- Modern Screen Transition System ---
 let currentScreen = 0;
@@ -1602,13 +1719,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isMobileDevice()) {
         // Fix all text inputs for mobile
         const allInputs = document.querySelectorAll('input[type="text"], input[type="number"], textarea');
-        
+
         // Enhance buttons for mobile touch
         const allButtons = document.querySelectorAll('.btn');
         allButtons.forEach(button => {
             button.style.touchAction = 'manipulation';
             button.style.webkitTapHighlightColor = 'transparent';
-            
+
             // Add touch feedback
             button.addEventListener('touchstart', (e) => {
                 button.style.transform = 'scale(0.95)';
@@ -1616,7 +1733,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     navigator.vibrate(30);
                 }
             }, { passive: true });
-            
+
             button.addEventListener('touchend', (e) => {
                 setTimeout(() => {
                     button.style.transform = '';
