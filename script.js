@@ -469,7 +469,7 @@ function resetDraggedElement() {
     dragState.originalIndex = null;
 }
 
-function showConfirmationDialog(message, onConfirmCallback, onCancelCallback = resetDraggedItem) {
+function showConfirmationDialog(message, onConfirmCallback, onCancelCallback = resetDraggedElement) {
     const dialog = document.getElementById('confirmation-dialog');
     const messageElement = document.getElementById('confirmation-message');
     messageElement.textContent = message;
@@ -498,7 +498,7 @@ function confirmSwitch(confirm) {
         } else if (!confirm && actionOnCancel) {
             actionOnCancel();
         } else if (!confirm) {
-            resetDraggedItem();
+            resetDraggedElement();
         }
         pendingSwitch = null;
     }, 300);
@@ -746,9 +746,10 @@ function createPlayerElement(playerName, isLeader = false) {
     const playerElement = document.createElement('div');
     playerElement.className = isLeader ? 'player leader locked' : 'player';
     playerElement.textContent = playerName;
+    playerElement.setAttribute('data-player-name', playerName);
     playerElement.dataset.playerName = playerName;
 
-    if (!isLeader) {
+    if (!isLeader && !gameStarted) {
         if (isMobileDevice()) {
             // Mobile: Use touch drag with tap fallback
             addTouchSupport(playerElement);
@@ -1290,7 +1291,7 @@ function startNewGame() {
     currentRound = 0;
     currentWord = '';
     gameStarted = false;
-    
+
     // Reset team result classes
     document.getElementById('team1-result').classList.remove('winner', 'tie');
     document.getElementById('team2-result').classList.remove('winner', 'tie');
@@ -1298,10 +1299,10 @@ function startNewGame() {
     // Hide results and show game container properly
     const resultsSection = document.getElementById('results');
     const gameContainer = document.getElementById('game-container');
-    
+
     resultsSection.style.display = 'none';
     resultsSection.classList.remove('show');
-    
+
     // Show game container with proper visibility
     gameContainer.style.display = 'flex';
     gameContainer.style.visibility = 'visible';
@@ -1349,11 +1350,11 @@ function backToSetup() {
     // Hide game and results completely
     const gameContainer = document.getElementById('game-container');
     const resultsSection = document.getElementById('results');
-    
+
     gameContainer.style.display = 'none';
     gameContainer.style.visibility = 'hidden';
     gameContainer.style.opacity = '0';
-    
+
     resultsSection.style.display = 'none';
     resultsSection.classList.remove('show');
 
@@ -1396,7 +1397,7 @@ function backToSetup() {
         'team1-players-setup',
         'team2-players-setup'
     ];
-    
+
     containers.forEach(containerId => {
         const container = document.getElementById(containerId);
         if (container) {
@@ -1818,25 +1819,30 @@ function showErrorModal(message, isVictory = false) {
     const errorMessage = document.getElementById('error-message');
 
     modalContent.classList.remove('victory');
-    // Clear any leftover confetti if the modal wasn't closed properly
-    const existingConfetti = modalContent.querySelector('.confetti-container');
-    if (existingConfetti) {
-        existingConfetti.innerHTML = '';
+    // Clear any leftover particles if the modal wasn't closed properly
+    const existingParticles = modalContent.querySelector('.code-particles');
+    if (existingParticles) {
+        existingParticles.innerHTML = '';
     }
 
     if (isVictory) {
         modalContent.classList.add('victory');
         errorMessage.innerHTML = `
             <div class="victory-message">
-                <h2>Victory!</h2>
+                <h2>System.Victory.Execute()</h2>
                 <div class="victory-stats">
                      ${message}
                 </div>
             </div>
         `;
-        setTimeout(triggerConfetti, 50);
+        setTimeout(triggerCodeParticles, 100);
     } else {
-        errorMessage.textContent = message;
+        errorMessage.innerHTML = `
+            <div style="font-family: 'Courier New', monospace; color: #ff6b6b;">
+                <strong>// Error:</strong><br>
+                ${message}
+            </div>
+        `;
     }
 
     modal.classList.add('show');
@@ -1847,42 +1853,61 @@ function closeErrorModal() {
     const modalContent = modal.querySelector('.modal-content');
 
     if (modalContent.classList.contains('victory')) {
-        const confettiContainer = modalContent.querySelector('.confetti-container');
-        if (confettiContainer) {
-            confettiContainer.innerHTML = '';
+        const particlesContainer = modalContent.querySelector('.code-particles');
+        if (particlesContainer) {
+            particlesContainer.innerHTML = '';
         }
     }
 
     modal.classList.remove('show');
 }
 
-function triggerConfetti() {
+function triggerCodeParticles() {
     const container = document.querySelector('.modal-content.victory .victory-message');
     if (!container) return;
 
-    // Create a dedicated confetti container if it doesn't exist
-    let confettiContainer = container.querySelector('.confetti-container');
-    if (!confettiContainer) {
-        confettiContainer = document.createElement('div');
-        confettiContainer.className = 'confetti-container';
-        container.appendChild(confettiContainer);
+    // Create a dedicated particles container if it doesn't exist
+    let particlesContainer = container.querySelector('.code-particles');
+    if (!particlesContainer) {
+        particlesContainer = document.createElement('div');
+        particlesContainer.className = 'code-particles';
+        container.appendChild(particlesContainer);
     }
 
-    confettiContainer.innerHTML = '';
+    particlesContainer.innerHTML = '';
 
-    const confettiCount = 100;
-    const colors = ['#ff0077', '#00eeff', '#7700ff', '#ffffff', '#f4d35e'];
+    const codeSymbols = [
+        '{ }', '[ ]', '( )', '< >',
+        '++', '--', '==', '!=',
+        '=>', '&&', '||', '??',
+        'fn', 'if', 'for', 'let',
+        '0x', '1.0', 'true', 'null',
+        '//', '/*', '*/', ';'
+    ];
 
-    for (let i = 0; i < confettiCount; i++) {
-        const piece = document.createElement('i');
-        piece.className = 'confetti-piece';
-        piece.style.left = Math.random() * 100 + '%';
-        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        const duration = Math.random() * 3 + 4;
-        piece.style.animationDuration = `${duration}s`;
-        const delay = Math.random() * 5;
-        piece.style.animationDelay = `${delay}s`;
-        confettiContainer.appendChild(piece);
+    const particleCount = 25;
+
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'code-particle';
+        particle.textContent = codeSymbols[Math.floor(Math.random() * codeSymbols.length)];
+
+        // Random positioning
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+
+        // Random timing
+        const duration = Math.random() * 2 + 3; // 3-5 seconds
+        const delay = Math.random() * 2; // 0-2 seconds delay
+
+        particle.style.animationDuration = `${duration}s`;
+        particle.style.animationDelay = `${delay}s`;
+
+        // Random colors from coding theme
+        const colors = ['#00ff88', '#0088ff', '#ff8800', '#888'];
+        particle.style.color = colors[Math.floor(Math.random() * colors.length)];
+
+        particlesContainer.appendChild(particle);
     }
 }
 
@@ -2462,3 +2487,345 @@ function handleTeamSetupDropToAvailable(playerName) {
     availableContainer.appendChild(draggedElement);
 }
 
+
+// --- Missing Functions ---
+function removePlayerFromAllGroups(playerName) {
+    // Remove from available players
+    players.available = players.available.filter(name => name !== playerName);
+
+    // Remove from team 1
+    players.team1 = players.team1.filter(name => name !== playerName);
+    if (players.team1Leader === playerName) {
+        players.team1Leader = null;
+    }
+
+    // Remove from team 2
+    players.team2 = players.team2.filter(name => name !== playerName);
+    if (players.team2Leader === playerName) {
+        players.team2Leader = null;
+    }
+}
+
+function updateAvailablePlayersDisplay() {
+    const container = document.getElementById('available-players-setup');
+    if (!container) return;
+
+    container.innerHTML = '';
+    players.available.forEach(playerName => {
+        const playerElement = createPlayerElement(playerName);
+        container.appendChild(playerElement);
+    });
+}
+
+function updateTeamPlayersDisplay() {
+    // Update team 1
+    const team1Container = document.getElementById('team1-players-setup');
+    const team1LeaderContainer = document.getElementById('team1-leader-container');
+
+    if (team1Container) {
+        team1Container.innerHTML = '';
+        players.team1.forEach(playerName => {
+            const playerElement = createPlayerElement(playerName);
+            team1Container.appendChild(playerElement);
+        });
+    }
+
+    if (team1LeaderContainer) {
+        team1LeaderContainer.innerHTML = '';
+        if (players.team1Leader) {
+            const leaderElement = createPlayerElement(players.team1Leader, true);
+            team1LeaderContainer.appendChild(leaderElement);
+        }
+    }
+
+    // Update team 2
+    const team2Container = document.getElementById('team2-players-setup');
+    const team2LeaderContainer = document.getElementById('team2-leader-container');
+
+    if (team2Container) {
+        team2Container.innerHTML = '';
+        players.team2.forEach(playerName => {
+            const playerElement = createPlayerElement(playerName);
+            team2Container.appendChild(playerElement);
+        });
+    }
+
+    if (team2LeaderContainer) {
+        team2LeaderContainer.innerHTML = '';
+        if (players.team2Leader) {
+            const leaderElement = createPlayerElement(players.team2Leader, true);
+            team2LeaderContainer.appendChild(leaderElement);
+        }
+    }
+}
+
+function showErrorModal(message) {
+    const modal = document.getElementById('error-modal');
+    const messageElement = document.getElementById('error-message');
+
+    if (modal && messageElement) {
+        messageElement.textContent = message;
+        modal.style.display = 'block';
+
+        // Auto-close after 3 seconds
+        setTimeout(() => {
+            closeErrorModal();
+        }, 3000);
+    } else {
+        // Fallback to alert if modal not found
+        alert(message);
+    }
+}
+
+function closeErrorModal() {
+    const modal = document.getElementById('error-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// --- Event Listeners and Initialization ---
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM loaded, initializing game...');
+
+    // Initialize speech recognition
+    initializeSpeechRecognition();
+
+    // Initialize drag and drop
+    initializeDragAndDrop();
+
+    // Player count slider
+    const playerSlider = document.getElementById('player-slider-input');
+    const sliderValue = document.getElementById('slider-value');
+
+    if (playerSlider && sliderValue) {
+        playerSlider.addEventListener('input', function () {
+            numberOfPlayers = parseInt(this.value);
+            sliderValue.textContent = numberOfPlayers;
+            maxTeamSize = Math.floor(numberOfPlayers / 2);
+        });
+
+        // Initialize values
+        numberOfPlayers = parseInt(playerSlider.value);
+        sliderValue.textContent = numberOfPlayers;
+        maxTeamSize = Math.floor(numberOfPlayers / 2);
+    }
+
+    // Round count slider
+    const roundSlider = document.getElementById('round-slider-input');
+    const roundSliderValue = document.getElementById('round-slider-value');
+
+    if (roundSlider && roundSliderValue) {
+        roundSlider.addEventListener('input', function () {
+            selectedRoundsCount = parseInt(this.value);
+            roundSliderValue.textContent = selectedRoundsCount;
+        });
+
+        // Initialize values
+        selectedRoundsCount = parseInt(roundSlider.value);
+        roundSliderValue.textContent = selectedRoundsCount;
+    }
+
+    // Confirm player count button
+    const confirmPlayerBtn = document.getElementById('confirm-player-count-btn');
+    if (confirmPlayerBtn) {
+        confirmPlayerBtn.addEventListener('click', function () {
+            transitionToScreen('player-select-screen', 'difficulty-select-screen');
+        });
+    }
+
+    // Confirm round count button
+    const confirmRoundBtn = document.getElementById('confirm-round-count-btn');
+    if (confirmRoundBtn) {
+        confirmRoundBtn.addEventListener('click', function () {
+            totalRounds = selectedRoundsCount;
+            transitionToScreen('round-select-screen', 'team-setup-screen');
+        });
+    }
+
+    // Add player button
+    const addPlayerBtn = document.getElementById('add-player-btn');
+    const playerNameInput = document.getElementById('player-name-input');
+
+    if (addPlayerBtn && playerNameInput) {
+        addPlayerBtn.addEventListener('click', function () {
+            const playerName = playerNameInput.value.trim();
+            if (playerName && !players.available.includes(playerName)) {
+                players.available.push(playerName);
+                updateAvailablePlayersDisplay();
+                playerNameInput.value = '';
+            }
+        });
+
+        playerNameInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                addPlayerBtn.click();
+            }
+        });
+    }
+
+    // Confirm teams button
+    const confirmTeamsBtn = document.getElementById('confirm-teams-btn');
+    if (confirmTeamsBtn) {
+        confirmTeamsBtn.addEventListener('click', function () {
+            // Validate teams
+            if (!players.team1Leader || !players.team2Leader) {
+                showErrorModal('Both teams need a leader!');
+                return;
+            }
+
+            const team1Size = getTeamSize(1);
+            const team2Size = getTeamSize(2);
+
+            if (team1Size === 0 || team2Size === 0) {
+                showErrorModal('Both teams need at least one player!');
+                return;
+            }
+
+            transitionToScreen('team-setup-screen', 'word-generation-screen');
+
+            // Update final game info
+            document.getElementById('final-player-count').textContent = numberOfPlayers;
+            document.getElementById('final-round-count').textContent = totalRounds;
+            document.getElementById('final-difficulty').textContent = gameDifficulty;
+
+            // Generate initial word
+            generateNewWord();
+        });
+    }
+
+    // Word visibility toggle buttons
+    const toggleWordBtn = document.getElementById('toggle-word-btn');
+    const gameToggleWordBtn = document.getElementById('game-toggle-word-btn');
+
+    if (toggleWordBtn) {
+        toggleWordBtn.addEventListener('click', toggleWordVisibility);
+    }
+
+    if (gameToggleWordBtn) {
+        gameToggleWordBtn.addEventListener('click', toggleWordVisibility);
+    }
+
+    // Final start game button
+    const finalStartBtn = document.getElementById('final-start-game-btn');
+    if (finalStartBtn) {
+        finalStartBtn.addEventListener('click', function () {
+            document.getElementById('word-generation-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            startGame();
+        });
+    }
+
+    console.log('Game initialization complete');
+});
+
+// Difficulty selection function
+function selectDifficulty(difficulty, event) {
+    gameDifficulty = difficulty;
+
+    // Update button states
+    document.querySelectorAll('.difficulty-slot-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    event.target.classList.add('selected');
+
+    // Auto-advance after selection
+    setTimeout(() => {
+        transitionToScreen('difficulty-select-screen', 'round-select-screen');
+    }, 500);
+}
+
+// --- Error Handling and Validation ---
+function validateGameState() {
+    const errors = [];
+
+    if (!players.team1Leader) {
+        errors.push('Team 1 needs a leader');
+    }
+
+    if (!players.team2Leader) {
+        errors.push('Team 2 needs a leader');
+    }
+
+    if (getTeamSize(1) < 2) {
+        errors.push('Team 1 needs at least 2 players (including leader)');
+    }
+
+    if (getTeamSize(2) < 2) {
+        errors.push('Team 2 needs at least 2 players (including leader)');
+    }
+
+    if (numberOfPlayers < 4) {
+        errors.push('Need at least 4 players total');
+    }
+
+    return errors;
+}
+
+// --- Performance Optimizations ---
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Debounced version of updateAllDisplays for better performance
+const debouncedUpdateDisplays = debounce(updateAllDisplays, 100);
+
+// --- Memory Management ---
+function cleanupEventListeners() {
+    // Remove all drag event listeners when game starts
+    document.querySelectorAll('.player').forEach(player => {
+        player.removeEventListener('dragstart', handleDragStart);
+        player.removeEventListener('dragend', handleDragEnd);
+    });
+}
+
+// --- Browser Compatibility Checks ---
+function checkBrowserSupport() {
+    const issues = [];
+
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+        issues.push('Speech recognition not supported');
+    }
+
+    if (!('ontouchstart' in window) && !navigator.maxTouchPoints) {
+        console.log('Touch events not supported - desktop mode');
+    }
+
+    if (!CSS.supports('backdrop-filter', 'blur(10px)')) {
+        console.log('Backdrop filter not supported - using fallback');
+    }
+
+    return issues;
+}
+
+// --- Utility Functions ---
+function sanitizeInput(input) {
+    return input.trim().replace(/[<>\"'&]/g, '');
+}
+
+function generateUniqueId() {
+    return 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// --- Enhanced Error Reporting ---
+window.addEventListener('error', function (e) {
+    console.error('Game Error:', e.error);
+    showErrorModal('An unexpected error occurred. Please refresh the page.');
+});
+
+window.addEventListener('unhandledrejection', function (e) {
+    console.error('Unhandled Promise Rejection:', e.reason);
+    showErrorModal('A network or loading error occurred.');
+});
+
+// --- Initialize on load ---
+console.log('Password Game Script Loaded Successfully');
+console.log('Browser Support Check:', checkBrowserSupport());
