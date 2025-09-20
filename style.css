@@ -379,11 +379,30 @@ body {
     }
 
     .difficulty-slot-btn {
-        padding: 1.25rem 2rem;
-        font-size: 1rem;
-        width: 100%;
-        min-height: 56px;
-        border-radius: 12px;
+        padding: 1.25rem 2rem !important;
+        font-size: 1rem !important;
+        width: 100% !important;
+        min-height: 56px !important;
+        border-radius: 12px !important;
+        background: var(--text-color-light) !important;
+        color: var(--primary-bg) !important;
+        border: 2px solid var(--text-color-light) !important;
+        box-sizing: border-box;
+    }
+
+    .difficulty-slot-btn:hover,
+    .difficulty-slot-btn:active {
+        background: var(--text-color-dark) !important;
+        border-color: var(--text-color-dark) !important;
+        color: var(--primary-bg) !important;
+    }
+
+    .difficulty-slot-btn.selected {
+        background: var(--text-color-light) !important;
+        color: var(--primary-bg) !important;
+        border-color: var(--text-color-light) !important;
+        transform: scale(0.95);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
     }
 
     .btn {
@@ -669,6 +688,16 @@ body {
     padding: 1rem 2rem;
     font-size: 1.2rem;
     letter-spacing: 1px;
+    background: var(--text-color-light) !important;
+    color: var(--primary-bg) !important;
+    border: 2px solid var(--text-color-light) !important;
+}
+
+.difficulty-slot-btn:hover {
+    background: var(--text-color-dark) !important;
+    border-color: var(--text-color-dark) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
 }
 
 .difficulty-slot-btn.selected {
@@ -676,6 +705,7 @@ body {
     color: var(--primary-bg) !important;
     border-color: var(--text-color-light) !important;
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    transform: scale(0.95);
 }
 
 /* Round Select Screen Styles */
@@ -985,63 +1015,160 @@ body {
 
     .team-setup-container {
         gap: 1rem;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
     }
 
     .add-player-section {
         gap: 0.75rem;
         margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
     }
 
     .add-player-section input[type="text"] {
         padding: 0.875rem;
         font-size: 16px;
         min-height: 48px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .add-player-section button {
         padding: 0.875rem 1.5rem;
         font-size: 1rem;
         min-height: 48px;
+        width: 100%;
     }
 
     .players-setup {
         gap: 1rem;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
     }
 
-    .available-players-section h3,
-    .team-setup h3 {
+    .available-players-section {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .available-players-section h3 {
         font-size: 1rem;
         margin-bottom: 0.5rem;
+        color: var(--text-color-light);
+        text-align: center;
+    }
+
+    #available-players-setup {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        min-height: 60px;
+        padding: 0.75rem;
+        border: 2px dashed #333;
+        border-radius: 8px;
+        background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+        justify-content: center;
+        align-items: center;
+    }
+
+    #available-players-setup:empty::before {
+        content: "Add players above, then drag them to teams";
+        color: var(--text-color-muted);
+        font-style: italic;
+        text-align: center;
+        width: 100%;
     }
 
     .teams-setup {
         gap: 1rem;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
     }
 
     .team-setup {
         padding: 0.75rem;
         border-radius: 8px;
+        background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+        border: 1px solid #333;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .team-setup h3 {
+        font-size: 1rem;
+        margin: 0 0 0.5rem 0;
+        color: var(--text-color-light);
+        text-align: center;
     }
 
     .leader-slot {
         min-height: 60px;
         padding: 0.75rem;
-        border-width: 2px;
+        border: 2px solid #00ff88;
+        border-radius: 8px;
+        background: linear-gradient(145deg, rgba(0, 255, 136, 0.05), rgba(0, 255, 136, 0.1));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .leader-label {
         font-size: 0.8rem;
-        margin-bottom: 0.25rem;
+        margin: 0;
+        color: #00ff88;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        font-family: 'Courier New', monospace;
     }
 
     .leader-container {
         min-height: 35px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .leader-container:empty::before {
+        content: "Drop leader here";
+        color: var(--text-color-muted);
+        font-style: italic;
+        font-size: 0.8rem;
     }
 
     .players-list {
         min-height: 70px;
         padding: 0.75rem;
-        border-width: 2px;
+        border: 2px dashed #333;
+        border-radius: 8px;
+        background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .players-list:empty::before {
+        content: "Drop team players here";
+        color: var(--text-color-muted);
+        font-style: italic;
+        font-size: 0.8rem;
+        text-align: center;
+        width: 100%;
     }
 
     .player {
@@ -1049,6 +1176,13 @@ body {
         margin: 0.25rem;
         font-size: 0.9rem;
         min-height: 40px;
+        background: var(--tertiary-bg);
+        color: var(--text-color-light);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
     }
 
     .mobile-instruction {
@@ -6437,9 +6571,13 @@ body {
         height: -webkit-fill-available;
         min-height: -webkit-fill-available;
     }
-}/* Perfo
+}
+
+/* Perfo
 rmance Optimizations */
-.player, .btn, .card {
+.player,
+.btn,
+.card {
     will-change: transform;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
@@ -6454,7 +6592,10 @@ rmance Optimizations */
 }
 
 /* Improve touch responsiveness */
-.btn, .player, input[type="text"], input[type="range"] {
+.btn,
+.player,
+input[type="text"],
+input[type="range"] {
     touch-action: manipulation;
 }
 
@@ -6473,7 +6614,10 @@ rmance Optimizations */
 
 /* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+
+    *,
+    *::before,
+    *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
@@ -6485,7 +6629,7 @@ rmance Optimizations */
     .btn {
         border-width: 3px;
     }
-    
+
     .player {
         border-width: 2px;
     }
@@ -6503,5 +6647,92 @@ input:focus-visible {
 @supports (-webkit-touch-callout: none) {
     .setup-screen {
         min-height: -webkit-fill-available;
+    }
+}
+
+/* Mobile-specific drag and drop enhancements */
+@media (max-width: 768px) {
+    .player {
+        position: relative;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        touch-action: manipulation;
+    }
+
+    .player:active {
+        transform: scale(0.95);
+        background: var(--quaternary-bg) !important;
+        z-index: 1000;
+    }
+
+    /* Enhanced visual feedback for drag zones on mobile */
+    .players-list.drag-over,
+    .leader-slot.drag-over,
+    #available-players-setup.drag-over {
+        background: rgba(0, 255, 136, 0.2) !important;
+        border-color: #00ff88 !important;
+        border-style: solid !important;
+        transform: scale(1.02);
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        animation: dragPulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes dragPulse {
+        0% {
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        100% {
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.7);
+        }
+    }
+
+    /* Better mobile touch targets */
+    .leader-container,
+    .players-list,
+    #available-players-setup {
+        min-height: 80px !important;
+        padding: 1rem !important;
+    }
+
+    /* Mobile-specific placeholder styling */
+    .leader-container:empty::before,
+    .players-list:empty::before,
+    #available-players-setup:empty::before {
+        font-size: 0.9rem;
+        color: var(--text-color-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        height: 100%;
+        width: 100%;
+    }
+
+    /* Ensure team setup sections are properly spaced */
+    .team-setup {
+        margin-bottom: 1rem;
+    }
+
+    .team-setup:last-child {
+        margin-bottom: 0;
+    }
+}
+
+/* Fix for iOS Safari specific issues */
+@supports (-webkit-touch-callout: none) {
+    .difficulty-slot-btn {
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    .player {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+    }
+
+    .setup-screen {
+        -webkit-overflow-scrolling: touch;
     }
 }
