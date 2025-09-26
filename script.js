@@ -9,7 +9,7 @@ let players = {
 
 let currentWord = '';
 let currentTeam = 1;
-// Removed unused variables: currentGuesser, currentHintGiver
+let currentGuesser = '';
 let gameLog = [];
 let totalRounds = 1;
 let currentRound = 0;
@@ -18,9 +18,423 @@ let gameDifficulty = 'easy'; // Default difficulty
 let isWordVisible = true; // Track word visibility state - INITIAL STATE IS NOW TRUE (VISIBLE)
 let selectedRoundsCount = 1; // Track selected rounds count globally
 let gameStarted = false; // Track if the game has started
+let gameStarting = false; // Track if the game is in the process of starting
 let pendingSwitch = null; // Track the pending switch action
 let maxTeamSize = 0; // Declare maxTeamSize globally
 let currentPlayerIndex = { 1: 0, 2: 0 }; // Track current player index for each team
+
+// Timer Settings
+let timerEnabled = true;
+let timerDuration = 90; // Default 90 seconds
+
+// --- Timer System ---
+class GameTimer {
+    constructor() {
+        this.roundTime = 90; // 90 seconds per round
+        this.currentTime = this.roundTime;
+        this.interval = null;
+        this.isRunning = false;
+        this.callbacks = {
+            onTick: null,
+            onWarning: null,
+            onTimeUp: null
+        };
+        this.warningThreshold = 15; // Warning at 15 seconds
+        this.warningTriggered = false;
+    }
+
+    start(duration = this.roundTime) {
+        this.roundTime = duration;
+        this.currentTime = duration;
+        this.isRunning = true;
+        this.warningTriggered = false;
+
+        soundManager.play('gameStart');
+        this.updateDisplay();
+
+        this.interval = setInterval(() => {
+            this.currentTime--;
+            this.updateDisplay();
+
+            if (this.callbacks.onTick) {
+                this.callbacks.onTick(this.currentTime);
+            }
+
+            // Warning at threshold
+            if (this.currentTime === this.warningThreshold && !this.warningTriggered) {
+                this.warningTriggered = true;
+                soundManager.play('timeWarning');
+                if (this.callbacks.onWarning) {
+                    this.callbacks.onWarning(this.currentTime);
+                }
+            }
+
+            // Tick sound in last 10 seconds
+            if (this.currentTime <= 10 && this.currentTime > 0) {
+                soundManager.play('tick');
+            }
+
+            // Time up
+            if (this.currentTime <= 0) {
+                this.stop();
+                soundManager.play('roundEnd');
+                if (this.callbacks.onTimeUp) {
+                    this.callbacks.onTimeUp();
+                }
+            }
+        }, 1000);
+    }
+
+    stop() {
+        if (this.interval) {
+            clearInterval(this.interval);
+            this.interval = null;
+        }
+        this.isRunning = false;
+        this.updateDisplay();
+    }
+
+    pause() {
+        if (this.interval) {
+            clearInterval(this.interval);
+            this.interval = null;
+        }
+        this.isRunning = false;
+    }
+
+    resume() {
+        if (!this.isRunning && this.currentTime > 0) {
+            this.start(this.currentTime);
+        }
+    }
+
+    reset(duration = this.roundTime) {
+        this.stop();
+        this.roundTime = duration;
+        this.currentTime = duration;
+        this.warningTriggered = false;
+        this.updateDisplay();
+    }
+
+    updateDisplay() {
+        const timerElement = document.getElementById('game-timer');
+        const progressElement = document.getElementById('timer-progress');
+
+        if (timerElement) {
+            const minutes = Math.floor(this.currentTime / 60);
+            const seconds = this.currentTime % 60;
+            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            // Add visual states
+            timerElement.className = 'game-timer';
+            if (this.currentTime <= 10) {
+                timerElement.classList.add('critical');
+            } else if (this.currentTime <= this.warningThreshold) {
+                timerElement.classList.add('warning');
+            }
+        }
+
+        if (progressElement) {
+            const progress = (this.currentTime / this.roundTime) * 100;
+            progressElement.style.width = `${progress}%`;
+
+            // Color coding
+            if (this.currentTime <= 10) {
+                progressElement.style.background = '#ff4444';
+            } else if (this.currentTime <= this.warningThreshold) {
+                progressElement.style.background = '#ff8800';
+            } else {
+                progressElement.style.background = '#9d4edd';
+            }
+        }
+    }
+
+    getTimeRemaining() {
+        return this.currentTime;
+    }
+
+    getProgress() {
+        return (this.roundTime - this.currentTime) / this.roundTime;
+    }
+
+    on(event, callback) {
+        if (this.callbacks.hasOwnProperty(`on${event.charAt(0).toUpperCase() + event.slice(1)}`)) {
+            this.callbacks[`on${event.charAt(0).toUpperCase() + event.slice(1)}`] = callback;
+        }
+    }
+}
+
+const gameTimer = new GameTimer();
+
+// --- Progress Indicators System ---
+class ProgressManager {
+    constructor() {
+        this.currentRound = 0;
+        this.totalRounds = 1;
+        this.wordsGuessed = 0;
+        this.totalWords = 0;
+        this.roundProgress = 0;
+    }
+
+    initialize(rounds) {
+        this.totalRounds = rounds;
+        this.currentRound = 0;
+        this.wordsGuessed = 0;
+        this.totalWords = 0;
+        this.roundProgress = 0;
+        this.updateAllIndicators();
+    }
+
+    startRound(roundNumber) {
+        this.currentRound = roundNumber;
+        this.roundProgress = 0;
+        this.updateRoundIndicator();
+        this.updateOverallProgress();
+        this.animateRoundStart();
+    }
+
+    updateWordProgress(guessed, total) {
+        this.wordsGuessed = guessed;
+        this.totalWords = total;
+        this.roundProgress = total > 0 ? (guessed / total) : 0;
+        this.updateWordIndicator();
+        this.updateRoundProgress();
+    }
+
+    updateAllIndicators() {
+        this.updateRoundIndicator();
+        this.updateOverallProgress();
+        this.updateWordIndicator();
+        this.updateRoundProgress();
+    }
+
+    updateRoundIndicator() {
+        const roundElement = document.getElementById('current-round-display');
+        const totalRoundsElement = document.getElementById('total-rounds-display');
+
+        if (roundElement) {
+            roundElement.textContent = this.currentRound;
+            roundElement.classList.add('pulse');
+            setTimeout(() => roundElement.classList.remove('pulse'), 600);
+        }
+
+        if (totalRoundsElement) {
+            totalRoundsElement.textContent = this.totalRounds;
+        }
+    }
+
+    updateOverallProgress() {
+        const progressBar = document.getElementById('overall-progress-bar');
+        const progressText = document.getElementById('overall-progress-text');
+
+        if (progressBar) {
+            const progress = this.totalRounds > 0 ? ((this.currentRound - 1) / this.totalRounds) * 100 : 0;
+            progressBar.style.width = `${progress}%`;
+
+            // Animate progress bar
+            progressBar.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        }
+
+        if (progressText) {
+            progressText.textContent = `Round ${this.currentRound} of ${this.totalRounds}`;
+        }
+    }
+
+    updateWordIndicator() {
+        const wordProgress = document.getElementById('word-progress');
+        const wordCount = document.getElementById('word-count');
+
+        if (wordProgress) {
+            const progress = this.totalWords > 0 ? (this.wordsGuessed / this.totalWords) * 100 : 0;
+            wordProgress.style.width = `${progress}%`;
+        }
+
+        if (wordCount) {
+            wordCount.textContent = `${this.wordsGuessed}/${this.totalWords} words`;
+        }
+    }
+
+    updateRoundProgress() {
+        const roundProgressBar = document.getElementById('round-progress-bar');
+
+        if (roundProgressBar) {
+            const progress = this.roundProgress * 100;
+            roundProgressBar.style.width = `${progress}%`;
+
+            // Color coding based on progress
+            if (progress >= 80) {
+                roundProgressBar.style.background = '#9d4edd';
+            } else if (progress >= 50) {
+                roundProgressBar.style.background = '#c77dff';
+            } else {
+                roundProgressBar.style.background = '#e0aaff';
+            }
+        }
+    }
+
+    animateRoundStart() {
+        const roundIndicator = document.getElementById('round-indicator');
+        if (roundIndicator) {
+            roundIndicator.classList.add('round-start-animation');
+            setTimeout(() => {
+                roundIndicator.classList.remove('round-start-animation');
+            }, 1000);
+        }
+    }
+
+    completeRound() {
+        this.currentRound++;
+        this.updateOverallProgress();
+
+        // Animate completion
+        const progressBar = document.getElementById('overall-progress-bar');
+        if (progressBar) {
+            progressBar.classList.add('round-complete');
+            setTimeout(() => {
+                progressBar.classList.remove('round-complete');
+            }, 800);
+        }
+    }
+
+    getGameProgress() {
+        return {
+            currentRound: this.currentRound,
+            totalRounds: this.totalRounds,
+            overallProgress: this.totalRounds > 0 ? (this.currentRound / this.totalRounds) : 0,
+            roundProgress: this.roundProgress,
+            wordsGuessed: this.wordsGuessed,
+            totalWords: this.totalWords
+        };
+    }
+}
+
+const progressManager = new ProgressManager();
+
+// --- Haptic Feedback System ---
+class HapticManager {
+    constructor() {
+        this.enabled = true;
+        this.intensity = 1.0;
+        this.patterns = {
+            light: [50],
+            medium: [100],
+            heavy: [200],
+            success: [50, 50, 100],
+            error: [100, 50, 100, 50, 100],
+            warning: [200, 100, 200],
+            tick: [30],
+            buttonPress: [40],
+            longPress: [80, 50, 80],
+            gameStart: [100, 50, 100, 50, 200],
+            victory: [200, 100, 200, 100, 300],
+            roundComplete: [150, 75, 150],
+            wordCorrect: [75, 25, 75, 25, 150],
+            wordWrong: [200, 100, 200],
+            timeWarning: [100, 50, 100, 50, 100, 50, 100],
+            dragStart: [60],
+            dragDrop: [80, 40, 80]
+        };
+    }
+
+    vibrate(pattern, intensity = this.intensity) {
+        if (!this.enabled || !navigator.vibrate) return false;
+
+        try {
+            // Adjust pattern intensity
+            const adjustedPattern = Array.isArray(pattern)
+                ? pattern.map(duration => Math.round(duration * intensity))
+                : [Math.round(pattern * intensity)];
+
+            navigator.vibrate(adjustedPattern);
+            return true;
+        } catch (error) {
+            console.warn('Haptic feedback not supported:', error);
+            return false;
+        }
+    }
+
+    trigger(type, customIntensity = null) {
+        const pattern = this.patterns[type];
+        if (pattern) {
+            return this.vibrate(pattern, customIntensity || this.intensity);
+        }
+        return false;
+    }
+
+    // Convenience methods for common interactions
+    success() {
+        return this.trigger('success');
+    }
+
+    error() {
+        return this.trigger('error');
+    }
+
+    warning() {
+        return this.trigger('warning');
+    }
+
+    buttonPress() {
+        return this.trigger('buttonPress');
+    }
+
+    longPress() {
+        return this.trigger('longPress');
+    }
+
+    tick() {
+        return this.trigger('tick');
+    }
+
+    gameStart() {
+        return this.trigger('gameStart');
+    }
+
+    victory() {
+        return this.trigger('victory');
+    }
+
+    wordCorrect() {
+        return this.trigger('wordCorrect');
+    }
+
+    wordWrong() {
+        return this.trigger('wordWrong');
+    }
+
+    timeWarning() {
+        return this.trigger('timeWarning');
+    }
+
+    dragStart() {
+        return this.trigger('dragStart');
+    }
+
+    dragDrop() {
+        return this.trigger('dragDrop');
+    }
+
+    // Settings
+    toggle() {
+        this.enabled = !this.enabled;
+        return this.enabled;
+    }
+
+    setIntensity(intensity) {
+        this.intensity = Math.max(0, Math.min(1, intensity));
+    }
+
+    isSupported() {
+        return 'vibrate' in navigator;
+    }
+
+    // Test haptic feedback
+    test(type = 'medium') {
+        return this.trigger(type);
+    }
+}
+
+const hapticManager = new HapticManager();
 
 // Drag and Drop State
 let dragState = {
@@ -37,6 +451,279 @@ let dragState = {
 let recognition = null;
 let targetInput = null;
 let activeMicButton = null;
+
+// --- Sound System ---
+class SoundManager {
+    constructor() {
+        this.sounds = {};
+        this.enabled = true;
+        this.volume = 0.3;
+        this.audioContext = null;
+        this.lastPlayTime = {};
+        this.minInterval = 50; // Minimum 50ms between same sounds
+        this.initializeSounds();
+    }
+
+    initializeSounds() {
+        // Create engaging game-friendly sounds
+        this.sounds = {
+            correct: this.createMelodic([523.25, 659.25, 783.99, 1046.5], [0.15, 0.15, 0.15, 0.25], 'sine'),
+            wrong: this.createDescending([440, 369.99, 293.66], [0.2, 0.2, 0.3], 'triangle'),
+            tick: this.createPop([1200, 800], [0.05, 0.05], 'square'),
+            timeWarning: this.createPop([880], [0.1, 0.1, 0.1], 'sine'),
+            gameStart: this.createFanfare([261.63, 329.63, 392, 523.25, 659.25], [0.12, 0.12, 0.12, 0.12, 0.2], 'sine'),
+            roundEnd: this.createMelodic([523.25, 659.25, 783.99], [0.3, 0.3, 0.4], 'sine'),
+            victory: this.createFanfare([523.25, 659.25, 783.99, 1046.5, 1318.5], [0.2, 0.2, 0.2, 0.2, 0.4], 'sine'),
+            buttonClick: this.createPop([800, 1000], [0.03, 0.02], 'sine'),
+            wordGenerate: this.createSparkle([659.25, 783.99, 987.77], [0.08, 0.08, 0.12], 'sine'),
+            teamSwitch: this.createPop([400, 600], [0.1, 0.1], 'triangle'),
+            dragStart: this.createPop([600, 800], [0.05, 0.05], 'sine'),
+            dragDrop: this.createPop([800, 400], [0.08, 0.12], 'sine')
+        };
+    }
+
+    getAudioContext() {
+        if (!this.audioContext) {
+            try {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (error) {
+                console.warn('Failed to create AudioContext:', error);
+                return null;
+            }
+        }
+        return this.audioContext;
+    }
+
+    createMelodic(frequencies, durations, waveType = 'sine') {
+        return () => {
+            if (!this.enabled) return;
+            try {
+                const audioContext = this.getAudioContext();
+                if (!audioContext) return;
+                let startTime = audioContext.currentTime;
+
+                frequencies.forEach((freq, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+
+                    oscillator.frequency.setValueAtTime(freq, startTime);
+                    oscillator.type = waveType;
+
+                    gainNode.gain.setValueAtTime(0, startTime);
+                    gainNode.gain.linearRampToValueAtTime(this.volume * 0.8, startTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + durations[index]);
+
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + durations[index]);
+
+                    startTime += durations[index] * 0.6;
+                });
+            } catch (error) {
+                console.warn('Audio not supported:', error);
+            }
+        };
+    }
+
+    createDescending(frequencies, durations, waveType = 'triangle') {
+        return () => {
+            if (!this.enabled) return;
+            try {
+                const audioContext = this.getAudioContext();
+                if (!audioContext) return;
+                let startTime = audioContext.currentTime;
+
+                frequencies.forEach((freq, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+
+                    oscillator.frequency.setValueAtTime(freq, startTime);
+                    oscillator.type = waveType;
+
+                    gainNode.gain.setValueAtTime(0, startTime);
+                    gainNode.gain.linearRampToValueAtTime(this.volume * 0.6, startTime + 0.02);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + durations[index]);
+
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + durations[index]);
+
+                    startTime += durations[index] * 0.8;
+                });
+            } catch (error) {
+                console.warn('Audio not supported:', error);
+            }
+        };
+    }
+
+    createPop(frequencies, durations, waveType = 'sine') {
+        return () => {
+            if (!this.enabled) return;
+            try {
+                const audioContext = this.getAudioContext();
+                if (!audioContext) return;
+
+                frequencies.forEach((freq, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+
+                    oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+                    oscillator.type = waveType;
+
+                    gainNode.gain.setValueAtTime(this.volume * 0.5, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + durations[index]);
+
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + durations[index]);
+                });
+            } catch (error) {
+                console.warn('Audio not supported:', error);
+            }
+        };
+    }
+
+    createSparkle(frequencies, durations, waveType = 'sine') {
+        return () => {
+            if (!this.enabled) return;
+            try {
+                const audioContext = this.getAudioContext();
+                if (!audioContext) return;
+
+                frequencies.forEach((freq, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+
+                    oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + index * 0.05);
+                    oscillator.type = waveType;
+
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.05);
+                    gainNode.gain.linearRampToValueAtTime(this.volume * 0.4, audioContext.currentTime + index * 0.05 + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + index * 0.05 + durations[index]);
+
+                    oscillator.start(audioContext.currentTime + index * 0.05);
+                    oscillator.stop(audioContext.currentTime + index * 0.05 + durations[index]);
+                });
+            } catch (error) {
+                console.warn('Audio not supported:', error);
+            }
+        };
+    }
+
+    createFanfare(frequencies, durations, waveType = 'sine') {
+        return () => {
+            if (!this.enabled) return;
+            try {
+                const audioContext = this.getAudioContext();
+                if (!audioContext) return;
+                let startTime = audioContext.currentTime;
+
+                frequencies.forEach((freq, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+
+                    oscillator.frequency.setValueAtTime(freq, startTime);
+                    oscillator.type = waveType;
+
+                    gainNode.gain.setValueAtTime(0, startTime);
+                    gainNode.gain.linearRampToValueAtTime(this.volume * 0.7, startTime + 0.02);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + durations[index]);
+
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + durations[index]);
+
+                    startTime += durations[index] * 0.5;
+                });
+            } catch (error) {
+                console.warn('Audio not supported:', error);
+            }
+        };
+    }
+
+    createSound(frequencies, durations, waveType = 'sine') {
+        return () => {
+            if (!this.enabled) return;
+
+            try {
+                const audioContext = this.getAudioContext();
+                if (!audioContext) return;
+                let startTime = audioContext.currentTime;
+
+                frequencies.forEach((freq, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+
+                    oscillator.frequency.setValueAtTime(freq, startTime);
+                    oscillator.type = waveType;
+
+                    gainNode.gain.setValueAtTime(0, startTime);
+                    gainNode.gain.linearRampToValueAtTime(this.volume, startTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + durations[index]);
+
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + durations[index]);
+
+                    startTime += durations[index] * 0.7; // Slight overlap
+                });
+            } catch (error) {
+                console.warn('Audio not supported:', error);
+            }
+        };
+    }
+
+    play(soundName) {
+        if (!this.enabled || !this.sounds[soundName]) return;
+
+        // Prevent rapid-fire audio calls that can crash WebAudio
+        const now = Date.now();
+        if (this.lastPlayTime[soundName] && (now - this.lastPlayTime[soundName]) < this.minInterval) {
+            return; // Skip if called too recently
+        }
+
+        this.lastPlayTime[soundName] = now;
+
+        try {
+            this.sounds[soundName]();
+        } catch (error) {
+            console.warn(`Audio error for ${soundName}:`, error);
+            // Disable audio temporarily if there are repeated errors
+            if (error.message.includes('AudioContext')) {
+                console.warn('AudioContext error detected, temporarily disabling audio');
+                this.enabled = false;
+                setTimeout(() => {
+                    this.enabled = true;
+                    console.log('Audio re-enabled');
+                }, 2000);
+            }
+        }
+    }
+
+    toggle() {
+        this.enabled = !this.enabled;
+        return this.enabled;
+    }
+
+    setVolume(volume) {
+        this.volume = Math.max(0, Math.min(1, volume));
+    }
+}
+
+const soundManager = new SoundManager();
 
 // --- Even More Expanded and Refined Word Lists ---
 const easyWords = [
@@ -517,10 +1204,8 @@ function addTouchSupport(element) {
 
     element.addEventListener('touchstart', (e) => {
         if (gameStarted) {
-            e.preventDefault();
             return;
         }
-        e.preventDefault();
 
         const touch = e.touches[0];
         touchState.startX = touch.clientX;
@@ -533,17 +1218,16 @@ function addTouchSupport(element) {
         // Start long press timer
         touchState.longPressTimer = setTimeout(() => {
             touchState.isDragging = true;
+            e.preventDefault(); // Only prevent default when starting drag
             startTouchDrag(element, touch);
         }, touchState.longPressDelay);
 
-    }, { passive: false });
+    }, { passive: true });
 
     element.addEventListener('touchmove', (e) => {
         if (gameStarted) {
-            e.preventDefault();
             return;
         }
-        e.preventDefault();
 
         const touch = e.touches[0];
         const deltaX = Math.abs(touch.clientX - touchState.startX);
@@ -559,8 +1243,9 @@ function addTouchSupport(element) {
             return;
         }
 
-        // Update drag position if dragging
+        // Only prevent default and update drag position if actively dragging
         if (touchState.isDragging && dragState.isDragging) {
+            e.preventDefault(); // Only prevent default when actively dragging
             updateTouchDragPosition(element, touch);
             updateTouchDropZoneHighlight(touch);
         }
@@ -569,10 +1254,8 @@ function addTouchSupport(element) {
 
     element.addEventListener('touchend', (e) => {
         if (gameStarted) {
-            e.preventDefault();
             return;
         }
-        e.preventDefault();
 
         // Clear timers and visual feedback
         if (touchState.longPressTimer) {
@@ -581,8 +1264,9 @@ function addTouchSupport(element) {
         }
         element.classList.remove('long-press-active');
 
-        // Handle drag end
+        // Handle drag end - only prevent default if we were actually dragging
         if (touchState.isDragging && dragState.isDragging) {
+            e.preventDefault();
             const touch = e.changedTouches[0];
             endTouchDrag(element, touch);
         }
@@ -781,9 +1465,31 @@ function updateAllDisplays() {
 
 // --- Game Logic ---
 async function startGame() {
-    console.log("Starting game...");
+    console.log("=== STARTING GAME ===");
+
+    // Prevent multiple starts
+    if (gameStarted) {
+        console.log("Game already started, ignoring call");
+        return;
+    }
+
     console.log("Team 1:", players.team1);
     console.log("Team 2:", players.team2);
+    console.log("Current word:", currentWord);
+
+    // Initialize game systems
+    progressManager.initialize(totalRounds);
+    progressManager.startRound(1);
+
+    // Start timer for the round if enabled
+    if (timerEnabled) {
+        gameTimer.reset(timerDuration);
+        gameTimer.start();
+    }
+
+    // Play game start sound and haptic
+    soundManager.play('gameStart');
+    hapticManager.gameStart();
 
     if (!players.team1Leader || !players.team2Leader) {
         showErrorModal('Each team needs a leader!');
@@ -876,8 +1582,14 @@ async function generateNewWord() {
     // Prevent word generation during active gameplay
     if (gameStarted) {
         showErrorModal('Cannot generate new word during gameplay! The word has already been chosen.');
+        soundManager.play('wrong');
+        hapticManager.error();
         return;
     }
+
+    // Play word generation sound
+    soundManager.play('wordGenerate');
+    hapticManager.buttonPress();
 
     try {
         currentWord = await fetchRandomWord();
@@ -1115,6 +1827,8 @@ function logWord(teamNumber) {
         const teamLeaderName = teamNumber === 1 ? players.team1Leader : players.team2Leader;
         const teamName = teamLeaderName ? `${teamLeaderName}'s team` : `Team ${teamNumber}`;
         showErrorModal(`It's not ${teamName}'s turn!`);
+        soundManager.play('wrong');
+        hapticManager.error();
         return;
     }
 
@@ -1126,17 +1840,19 @@ function logWord(teamNumber) {
     const playerName = players[`team${teamNumber}`][currentPlayerIndex[teamNumber]];
     const timestamp = formatTime(new Date());
 
+    const isCorrect = word === currentWord;
+
     gameLog.push({
         player: playerName,
         word: word,
         team: teamNumber,
         timestamp: new Date(),
-        type: word === currentWord ? 'correct-guess' : 'wrong-guess'
+        type: isCorrect ? 'correct-guess' : 'wrong-guess'
     });
 
     const wordDisplay = document.getElementById(`team${teamNumber}-word-display`);
     const logEntry = document.createElement('div');
-    logEntry.className = 'log-entry';
+    logEntry.className = `log-entry ${isCorrect ? 'correct' : 'wrong'}`;
 
     const messageSpan = document.createElement('span');
     messageSpan.className = 'message';
@@ -1152,11 +1868,25 @@ function logWord(teamNumber) {
     wordDisplay.appendChild(logEntry);
     wordLogInput.value = '';
 
-    if (word === currentWord) {
+    // Audio and haptic feedback
+    if (isCorrect) {
+        soundManager.play('correct');
+        hapticManager.wordCorrect();
+
+        // Update progress
+        const correctGuesses = gameLog.filter(entry => entry.type === 'correct-guess').length;
+        progressManager.updateWordProgress(correctGuesses, gameLog.length);
+
         const teamLeaderName = teamNumber === 1 ? players.team1Leader : players.team2Leader;
-        showErrorModal(`${teamLeaderName}'s team guessed the password!`);
+        showErrorModal(`${teamLeaderName}'s team guessed the password!`, true);
+
+        // Stop timer and end round
+        gameTimer.stop();
         endRound();
         return;
+    } else {
+        soundManager.play('wrong');
+        hapticManager.wordWrong();
     }
 
     switchTeams();
@@ -1234,29 +1964,38 @@ function endGame() {
     document.getElementById('correct-count').textContent = correctGuesses.length;
     document.getElementById('success-rate').textContent = `${successRate}%`;
 
-    // Update team statistics
+    // Update team statistics and headers
     document.getElementById('team1-correct').textContent = team1Correct;
     document.getElementById('team1-hints').textContent = team1Hints;
     document.getElementById('team2-correct').textContent = team2Correct;
     document.getElementById('team2-hints').textContent = team2Hints;
+
+    // Update team result headers with leader names
+    const team1ResultHeader = document.querySelector('#team1-result h3');
+    const team2ResultHeader = document.querySelector('#team2-result h3');
+    if (team1ResultHeader) team1ResultHeader.textContent = `${team1LeaderName}'s Team`;
+    if (team2ResultHeader) team2ResultHeader.textContent = `${team2LeaderName}'s Team`;
 
     // Determine and display winner
     const winningTeam = document.getElementById('winning-team');
     const winnerText = document.getElementById('winner-text');
     const winnerMessage = document.getElementById('winner-message');
 
+    const team1LeaderName = players.team1Leader || 'Team 1';
+    const team2LeaderName = players.team2Leader || 'Team 2';
+
     if (team1Correct > team2Correct) {
-        winnerText.textContent = '🏆 Team 1 Wins!';
-        winnerMessage.textContent = `Team 1 guessed ${team1Correct} words correctly!`;
+        winnerText.textContent = `🏆 ${team1LeaderName}'s Team Wins!`;
+        winnerMessage.textContent = `${team1LeaderName}'s team guessed ${team1Correct} words correctly!`;
         document.getElementById('team1-result').classList.add('winner');
         winningTeam.style.display = 'block';
     } else if (team2Correct > team1Correct) {
-        winnerText.textContent = '🏆 Team 2 Wins!';
-        winnerMessage.textContent = `Team 2 guessed ${team2Correct} words correctly!`;
+        winnerText.textContent = `🏆 ${team2LeaderName}'s Team Wins!`;
+        winnerMessage.textContent = `${team2LeaderName}'s team guessed ${team2Correct} words correctly!`;
         document.getElementById('team2-result').classList.add('winner');
         winningTeam.style.display = 'block';
     } else {
-        winnerText.textContent = '🤝 It\'s a Tie!';
+        winnerText.textContent = '🤝 Perfect Tie!';
         winnerMessage.textContent = `Both teams guessed ${team1Correct} words correctly!`;
         document.getElementById('team1-result').classList.add('tie');
         document.getElementById('team2-result').classList.add('tie');
@@ -1412,7 +2151,7 @@ function backToSetup() {
 
 // --- Modern Screen Transition System ---
 let currentScreen = 0;
-const screens = ['player-select-screen', 'difficulty-select-screen', 'round-select-screen', 'team-setup-screen', 'word-generation-screen'];
+const screens = ['player-select-screen', 'difficulty-select-screen', 'round-select-screen', 'timer-setup-screen', 'team-setup-screen', 'word-generation-screen'];
 let selectedPlayerCount = 0;
 
 function transitionToScreen(fromScreenId, toScreenId, direction = 'right') {
@@ -1671,10 +2410,13 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmRoundBtn.style.color = 'var(--primary-bg)';
 
             setTimeout(() => {
-                transitionToScreen('round-select-screen', 'team-setup-screen');
+                transitionToScreen('round-select-screen', 'timer-setup-screen');
             }, 200);
         });
     }
+
+    // Timer setup functionality
+    setupTimerControls();
 
     // Setup team management
     setupTeamManagement();
@@ -1682,7 +2424,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup final start game button
     const finalStartGameBtn = document.getElementById('final-start-game-btn');
     if (finalStartGameBtn) {
-        finalStartGameBtn.addEventListener('click', () => {
+        finalStartGameBtn.addEventListener('click', (e) => {
+            console.log('Final start game button clicked!', e);
+
+            // Prevent multiple clicks
+            if (gameStarting || gameStarted || finalStartGameBtn.disabled) {
+                console.log('Button click ignored - game already starting or started');
+                return;
+            }
+
+            // Disable button immediately
+            finalStartGameBtn.disabled = true;
             finalStartGameBtn.style.transform = 'scale(0.95)';
             finalStartGameBtn.style.background = 'var(--text-color-light)';
             finalStartGameBtn.style.color = 'var(--primary-bg)';
@@ -1829,12 +2581,17 @@ function showErrorModal(message, isVictory = false) {
         modalContent.classList.add('victory');
         errorMessage.innerHTML = `
             <div class="victory-message">
-                <h2>System.Victory.Execute()</h2>
+                <h2>Victory Achieved</h2>
                 <div class="victory-stats">
                      ${message}
                 </div>
             </div>
         `;
+
+        // Play victory sound and haptic
+        soundManager.play('victory');
+        hapticManager.victory();
+
         setTimeout(triggerCodeParticles, 100);
     } else {
         errorMessage.innerHTML = `
@@ -1903,8 +2660,8 @@ function triggerCodeParticles() {
         particle.style.animationDuration = `${duration}s`;
         particle.style.animationDelay = `${delay}s`;
 
-        // Random colors from coding theme
-        const colors = ['#00ff88', '#0088ff', '#ff8800', '#888'];
+        // Random colors from coding theme - purple palette
+        const colors = ['#9d4edd', '#c77dff', '#e0aaff', '#888'];
         particle.style.color = colors[Math.floor(Math.random() * colors.length)];
 
         particlesContainer.appendChild(particle);
@@ -1992,8 +2749,12 @@ function addSimpleTouchFallback(element) {
 
     element.addEventListener('click', (e) => {
         if (gameStarted) return;
-        e.preventDefault();
-        e.stopPropagation();
+
+        // Only prevent default if this is actually a player interaction
+        if (e.target.classList.contains('player')) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
 
         tapCount++;
 
@@ -2255,6 +3016,7 @@ function validateTeamSetup() {
 }
 
 function startWordGeneration() {
+    console.log('Starting word generation screen');
     // Show loading spinner
     const spinner = document.querySelector('.loading-spinner');
     const wordSection = document.querySelector('.word-section');
@@ -2283,13 +3045,30 @@ function startWordGeneration() {
 
         // Show start game button instead of auto-starting
         if (startButton) {
+            console.log('Showing start game button');
             startButton.style.display = 'block';
             startButton.style.opacity = '1';
+
+            // Add a small delay to prevent accidental immediate clicks
+            startButton.disabled = true;
+            setTimeout(() => {
+                startButton.disabled = false;
+                console.log('Start game button enabled');
+            }, 500);
         }
     }, 1500);
 }
 
 function finalizeGameSetup() {
+    console.log('Finalizing game setup and starting game');
+
+    // Prevent multiple calls
+    if (gameStarting || gameStarted) {
+        console.log('Game already starting or started, ignoring call');
+        return;
+    }
+    gameStarting = true;
+
     // Transfer setup data to main game
     // Completely reset all player data
     players.available = [];
@@ -2626,22 +3405,9 @@ document.addEventListener('DOMContentLoaded', function () {
         roundSliderValue.textContent = selectedRoundsCount;
     }
 
-    // Confirm player count button
-    const confirmPlayerBtn = document.getElementById('confirm-player-count-btn');
-    if (confirmPlayerBtn) {
-        confirmPlayerBtn.addEventListener('click', function () {
-            transitionToScreen('player-select-screen', 'difficulty-select-screen');
-        });
-    }
+    // Note: Confirm player count button is now handled in the main setup flow above
 
-    // Confirm round count button
-    const confirmRoundBtn = document.getElementById('confirm-round-count-btn');
-    if (confirmRoundBtn) {
-        confirmRoundBtn.addEventListener('click', function () {
-            totalRounds = selectedRoundsCount;
-            transitionToScreen('round-select-screen', 'team-setup-screen');
-        });
-    }
+    // Note: Confirm round count button is now handled in the main setup flow above
 
     // Add player button
     const addPlayerBtn = document.getElementById('add-player-btn');
@@ -2664,35 +3430,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Confirm teams button
-    const confirmTeamsBtn = document.getElementById('confirm-teams-btn');
-    if (confirmTeamsBtn) {
-        confirmTeamsBtn.addEventListener('click', function () {
-            // Validate teams
-            if (!players.team1Leader || !players.team2Leader) {
-                showErrorModal('Both teams need a leader!');
-                return;
-            }
-
-            const team1Size = getTeamSize(1);
-            const team2Size = getTeamSize(2);
-
-            if (team1Size === 0 || team2Size === 0) {
-                showErrorModal('Both teams need at least one player!');
-                return;
-            }
-
-            transitionToScreen('team-setup-screen', 'word-generation-screen');
-
-            // Update final game info
-            document.getElementById('final-player-count').textContent = numberOfPlayers;
-            document.getElementById('final-round-count').textContent = totalRounds;
-            document.getElementById('final-difficulty').textContent = gameDifficulty;
-
-            // Generate initial word
-            generateNewWord();
-        });
-    }
+    // Note: Confirm teams button is now handled in setupTeamManagement() function
 
     // Word visibility toggle buttons
     const toggleWordBtn = document.getElementById('toggle-word-btn');
@@ -2706,18 +3444,90 @@ document.addEventListener('DOMContentLoaded', function () {
         gameToggleWordBtn.addEventListener('click', toggleWordVisibility);
     }
 
-    // Final start game button
-    const finalStartBtn = document.getElementById('final-start-game-btn');
-    if (finalStartBtn) {
-        finalStartBtn.addEventListener('click', function () {
-            document.getElementById('word-generation-screen').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            startGame();
+    // Note: Final start game button is now handled in the main setup flow above
+
+    console.log('Game initialization complete');
+
+    // Initialize game controls
+    initializeGameControls();
+
+    // Setup timer callbacks
+    gameTimer.on('warning', (timeLeft) => {
+        hapticManager.timeWarning();
+        console.log(`Time warning: ${timeLeft} seconds left`);
+    });
+
+    gameTimer.on('timeUp', () => {
+        showErrorModal('Time\'s up! Moving to next round.');
+        endRound();
+    });
+});
+
+// Initialize game control buttons
+function initializeGameControls() {
+    const soundToggle = document.getElementById('sound-toggle');
+    const hapticToggle = document.getElementById('haptic-toggle');
+    const pauseToggle = document.getElementById('pause-toggle');
+
+    if (soundToggle) {
+        soundToggle.addEventListener('click', () => {
+            const enabled = soundManager.toggle();
+            soundToggle.textContent = enabled ? '🔊' : '🔇';
+            soundToggle.classList.toggle('active', enabled);
+            soundToggle.setAttribute('data-tooltip', enabled ? 'Sound On' : 'Sound Off');
+
+            if (enabled) soundManager.play('buttonClick');
+            hapticManager.buttonPress();
         });
     }
 
-    console.log('Game initialization complete');
-});
+    if (hapticToggle) {
+        hapticToggle.addEventListener('click', () => {
+            const enabled = hapticManager.toggle();
+            hapticToggle.textContent = enabled ? '📳' : '📴';
+            hapticToggle.classList.toggle('active', enabled);
+            hapticToggle.setAttribute('data-tooltip', enabled ? 'Haptic On' : 'Haptic Off');
+
+            soundManager.play('buttonClick');
+            if (enabled) hapticManager.buttonPress();
+        });
+    }
+
+    if (pauseToggle) {
+        pauseToggle.addEventListener('click', () => {
+            if (gameTimer.isRunning) {
+                gameTimer.pause();
+                pauseToggle.textContent = '▶️';
+                pauseToggle.setAttribute('data-tooltip', 'Resume');
+                soundManager.play('buttonClick');
+                hapticManager.buttonPress();
+            } else if (gameTimer.getTimeRemaining() > 0) {
+                gameTimer.resume();
+                pauseToggle.textContent = '⏸️';
+                pauseToggle.setAttribute('data-tooltip', 'Pause');
+                soundManager.play('buttonClick');
+                hapticManager.buttonPress();
+            }
+        });
+    }
+
+    // Add sound and haptic to all buttons
+    document.querySelectorAll('.btn').forEach(button => {
+        button.addEventListener('click', () => {
+            soundManager.play('buttonClick');
+            hapticManager.buttonPress();
+        });
+    });
+
+    // Add haptic feedback to drag operations
+    document.addEventListener('dragstart', () => {
+        hapticManager.dragStart();
+    });
+
+    document.addEventListener('drop', () => {
+        hapticManager.dragDrop();
+    });
+}
 
 // Difficulty selection function
 function selectDifficulty(difficulty, event) {
@@ -2812,7 +3622,7 @@ function sanitizeInput(input) {
 }
 
 function generateUniqueId() {
-    return 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    return 'player_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
 }
 
 // --- Enhanced Error Reporting ---
@@ -2829,3 +3639,97 @@ window.addEventListener('unhandledrejection', function (e) {
 // --- Initialize on load ---
 console.log('Password Game Script Loaded Successfully');
 console.log('Browser Support Check:', checkBrowserSupport());
+
+// Timer setup functions
+function setupTimerControls() {
+    const enableTimerCheckbox = document.getElementById('enable-timer');
+    const timerDurationSection = document.getElementById('timer-duration-section');
+    const timerPresetBtns = document.querySelectorAll('.timer-preset-btn');
+    const customTimerSlider = document.getElementById('custom-timer');
+    const timerValueDisplay = document.getElementById('timer-value');
+    const confirmTimerBtn = document.getElementById('confirm-timer-btn');
+
+    // Timer enable/disable toggle
+    if (enableTimerCheckbox && timerDurationSection) {
+        enableTimerCheckbox.addEventListener('change', function () {
+            timerEnabled = this.checked;
+            timerDurationSection.classList.toggle('disabled', !timerEnabled);
+            soundManager.play('buttonClick');
+            hapticManager.buttonPress();
+        });
+    }
+
+    // Timer preset buttons
+    timerPresetBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const duration = parseInt(this.dataset.duration);
+            timerDuration = duration;
+
+            // Update button states
+            timerPresetBtns.forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+
+            // Update custom slider
+            if (customTimerSlider) {
+                customTimerSlider.value = duration;
+            }
+            if (timerValueDisplay) {
+                timerValueDisplay.textContent = formatTimerValue(duration);
+            }
+
+            soundManager.play('buttonClick');
+            hapticManager.buttonPress();
+        });
+    });
+
+    // Custom timer slider with debounced audio
+    if (customTimerSlider && timerValueDisplay) {
+        let sliderAudioTimeout = null;
+
+        customTimerSlider.addEventListener('input', function () {
+            timerDuration = parseInt(this.value);
+            timerValueDisplay.textContent = formatTimerValue(timerDuration);
+
+            // Remove selection from preset buttons
+            timerPresetBtns.forEach(btn => btn.classList.remove('selected'));
+
+            // Debounce audio to prevent excessive AudioContext creation
+            if (sliderAudioTimeout) {
+                clearTimeout(sliderAudioTimeout);
+            }
+            sliderAudioTimeout = setTimeout(() => {
+                soundManager.play('tick');
+            }, 100); // Only play sound after 100ms of no input
+        });
+    }
+
+    // Confirm timer settings
+    if (confirmTimerBtn) {
+        confirmTimerBtn.addEventListener('click', function () {
+            soundManager.play('buttonClick');
+            hapticManager.buttonPress();
+
+            this.style.transform = 'scale(0.95)';
+            this.style.background = 'var(--text-color-light)';
+            this.style.color = 'var(--primary-bg)';
+
+            setTimeout(() => {
+                transitionToScreen('timer-setup-screen', 'team-setup-screen');
+            }, 200);
+        });
+    }
+}
+
+function formatTimerValue(seconds) {
+    if (seconds < 60) {
+        return `${seconds}s`;
+    } else {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        if (remainingSeconds === 0) {
+            return `${minutes}m`;
+        } else {
+            return `${minutes}m ${remainingSeconds}s`;
+        }
+    }
+}
