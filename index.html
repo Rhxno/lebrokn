@@ -58,6 +58,40 @@
             </div>
         </section>
 
+        <section class="setup-screen" id="timer-setup-screen">
+            <div class="card-content">
+                <h2>Timer Settings</h2>
+                <div class="timer-setup-container">
+                    <div class="timer-option">
+                        <label class="timer-toggle">
+                            <input type="checkbox" id="enable-timer" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Enable Round Timer</span>
+                        </label>
+                    </div>
+                    
+                    <div class="timer-duration-section" id="timer-duration-section">
+                        <h3>Timer Duration</h3>
+                        <div class="timer-presets">
+                            <button class="btn timer-preset-btn" data-duration="60">1 Minute</button>
+                            <button class="btn timer-preset-btn selected" data-duration="90">1.5 Minutes</button>
+                            <button class="btn timer-preset-btn" data-duration="120">2 Minutes</button>
+                            <button class="btn timer-preset-btn" data-duration="180">3 Minutes</button>
+                        </div>
+                        
+                        <div class="custom-timer-section">
+                            <label for="custom-timer">Custom Duration (seconds):</label>
+                            <div class="custom-timer-input">
+                                <input type="range" id="custom-timer" min="30" max="300" value="90" step="15">
+                                <span class="timer-value" id="timer-value">90s</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn primary-btn" id="confirm-timer-btn">Continue</button>
+            </div>
+        </section>
+
         <section class="setup-screen" id="team-setup-screen">
             <div class="card-content">
                 <h2>Setup Teams & Players</h2>
@@ -126,12 +160,50 @@
         </section>
 
         <div id="game-container" style="display: none;">
+            <!-- Game Controls Panel -->
+            <div class="game-controls-panel">
+                <button class="control-button active" id="sound-toggle" data-tooltip="Sound On/Off">🔊</button>
+                <button class="control-button active" id="haptic-toggle" data-tooltip="Haptic Feedback">📳</button>
+                <button class="control-button" id="pause-toggle" data-tooltip="Pause/Resume">⏸️</button>
+            </div>
+
             <header class="navbar">
                 <div class="logo">Password</div>
             </header>
 
             <main>
                 <section class="game-screen card">
+                    <!-- Game Progress Header -->
+                    <div class="game-header">
+                        <div class="game-progress-container">
+                            <div class="round-indicator" id="round-indicator">
+                                <span class="round-text">Round</span>
+                                <span class="round-numbers">
+                                    <span id="current-round-display">1</span>
+                                    <span class="separator">of</span>
+                                    <span id="total-rounds-display">3</span>
+                                </span>
+                            </div>
+                            
+                            <div class="overall-progress">
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" id="overall-progress-bar"></div>
+                                </div>
+                                <span class="progress-text" id="overall-progress-text">Round 1 of 3</span>
+                            </div>
+                        </div>
+
+                        <div class="timer-container">
+                            <div class="timer-display">
+                                <span class="timer-icon">⏱️</span>
+                                <span class="game-timer" id="game-timer">1:30</span>
+                            </div>
+                            <div class="timer-progress-container">
+                                <div class="timer-progress" id="timer-progress"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <h2>Game in Progress</h2>
 
                     <div class="current-word-display">
