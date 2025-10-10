@@ -833,3 +833,9 @@ input[type="range"]::-moz-range-thumb {
         font-size: 0.95rem !important;
     }
 }
+
+/* Game text colors */
+#game-container * { color: white !important; }
+.game-header, .game-header * { color: white !important; }
+.word-display { color: white !important; font-size: 2rem !important; }
+h2, h3 { color: white !important; }
