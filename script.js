@@ -3777,7 +3777,7 @@ function initializeMultiplayer() {
     console.log('Initializing multiplayer...');
     console.log('MultiplayerClient available:', typeof MultiplayerClient !== 'undefined');
     console.log('MultiplayerUI available:', typeof MultiplayerUI !== 'undefined');
-    
+
     if (typeof MultiplayerClient !== 'undefined' && typeof MultiplayerUI !== 'undefined') {
         try {
             multiplayerClient = new MultiplayerClient();
@@ -3801,12 +3801,21 @@ function setupGameModeSelection() {
     const backToModeBtn = document.getElementById('back-to-mode-select-btn');
 
     if (singlePlayerBtn) {
-        singlePlayerBtn.addEventListener('click', () => {
+        console.log('Single player button found, adding event listener');
+        console.log('Button element:', singlePlayerBtn);
+        singlePlayerBtn.addEventListener('click', (e) => {
+            console.log('Single player button clicked!', e);
+            e.preventDefault();
+            e.stopPropagation();
+
             isMultiplayerMode = false;
             showScreen('player-select-screen');
+            hideScreen('game-mode-select-screen');
             soundManager.play('buttonClick');
             hapticManager.buttonPress();
         });
+    } else {
+        console.log('Single player button not found!');
     }
 
     if (multiplayerBtn) {
@@ -3814,13 +3823,13 @@ function setupGameModeSelection() {
         console.log('Button element:', multiplayerBtn);
         console.log('Button disabled:', multiplayerBtn.disabled);
         console.log('Button style display:', multiplayerBtn.style.display);
-        
+
         multiplayerBtn.addEventListener('click', (e) => {
             console.log('Multiplayer button clicked!', e);
             console.log('multiplayerUI exists:', !!multiplayerUI);
             e.preventDefault();
             e.stopPropagation();
-            
+
             isMultiplayerMode = true;
             if (multiplayerUI) {
                 console.log('Calling multiplayerUI.showMultiplayerMenu()');
@@ -4078,21 +4087,64 @@ function updateFinalScores(scores, winner) {
 
 // Screen management helpers
 function showScreen(screenId) {
+    console.log(`showScreen called for: ${screenId}`);
+
     // Hide all setup screens
     const screens = document.querySelectorAll('.setup-screen');
-    screens.forEach(screen => screen.classList.remove('active'));
+    console.log(`Found ${screens.length} setup screens to hide`);
+    screens.forEach(screen => {
+        console.log(`Hiding screen: ${screen.id}`);
+        screen.classList.remove('active');
+        // Force display none after a brief delay to allow transition
+        setTimeout(() => {
+            if (!screen.classList.contains('active')) {
+                screen.style.display = 'none';
+            }
+        }, 50);
+    });
 
     // Show target screen
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
+        console.log(`Showing target screen: ${screenId}`);
+        // Clear any inline display style first
+        targetScreen.style.display = '';
         targetScreen.classList.add('active');
+        console.log('Target screen classes:', targetScreen.className);
+        console.log('Target screen display:', window.getComputedStyle(targetScreen).display);
+        console.log('Target screen opacity:', window.getComputedStyle(targetScreen).opacity);
+        console.log('Target screen z-index:', window.getComputedStyle(targetScreen).zIndex);
+        console.log('Target screen visibility:', window.getComputedStyle(targetScreen).visibility);
+
+        // Check if content exists
+        const cardContent = targetScreen.querySelector('.card-content');
+        if (cardContent) {
+            console.log('Card content found');
+            console.log('Card content display:', window.getComputedStyle(cardContent).display);
+            console.log('Card content opacity:', window.getComputedStyle(cardContent).opacity);
+        } else {
+            console.log('Card content NOT found!');
+        }
+    } else {
+        console.log(`Target screen not found: ${screenId}`);
     }
 }
 
 function hideScreen(screenId) {
     const screen = document.getElementById(screenId);
     if (screen) {
+        console.log(`Hiding screen: ${screenId}`);
+        console.log('Screen before hide:', screen.className);
         screen.classList.remove('active');
+        // Force display none after removing active class
+        setTimeout(() => {
+            if (!screen.classList.contains('active')) {
+                screen.style.display = 'none';
+            }
+        }, 50);
+        console.log('Screen after hide:', screen.className);
+    } else {
+        console.log(`Screen not found: ${screenId}`);
     }
 }
 

@@ -18,7 +18,7 @@ app.use(compression());
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
         ? ['https://yourdomain.com'] // Replace with your actual domain
-        : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500'],
+        : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500', 'http://127.0.0.1:5500'],
     credentials: true
 }));
 app.use(express.json());
@@ -29,7 +29,7 @@ const io = socketIo(server, {
     cors: {
         origin: process.env.NODE_ENV === 'production' 
             ? ['https://yourdomain.com']
-            : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500'],
+            : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500', 'http://127.0.0.1:5500'],
         methods: ['GET', 'POST'],
         credentials: true
     },

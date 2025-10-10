@@ -227,6 +227,11 @@ class MultiplayerUI {
             menuScreen.classList.add('active');
             this.currentScreen = 'menu';
             console.log('Multiplayer menu screen activated');
+            console.log('Menu screen classes:', menuScreen.className);
+            console.log('Menu screen display:', window.getComputedStyle(menuScreen).display);
+            console.log('Menu screen opacity:', window.getComputedStyle(menuScreen).opacity);
+            console.log('Menu screen transform:', window.getComputedStyle(menuScreen).transform);
+            console.log('Menu screen z-index:', window.getComputedStyle(menuScreen).zIndex);
         } else {
             console.error('multiplayer-menu-screen not found in DOM');
         }
@@ -283,6 +288,14 @@ class MultiplayerUI {
 
         try {
             this.showConnectionScreen('Connecting to server...');
+            
+            // Check if server is running first
+            const serverRunning = await this.checkServerStatus();
+            if (!serverRunning) {
+                this.showServerNotRunningMessage();
+                return;
+            }
+            
             await this.client.connect(playerName);
             
             this.showConnectionScreen('Finding public game...');
@@ -305,6 +318,14 @@ class MultiplayerUI {
 
         try {
             this.showConnectionScreen('Creating private room...');
+            
+            // Check if server is running first
+            const serverRunning = await this.checkServerStatus();
+            if (!serverRunning) {
+                this.showServerNotRunningMessage();
+                return;
+            }
+            
             await this.client.connect(playerName);
             
             this.client.createPrivateRoom({
@@ -344,6 +365,14 @@ class MultiplayerUI {
 
         try {
             this.showConnectionScreen('Joining private room...');
+            
+            // Check if server is running first
+            const serverRunning = await this.checkServerStatus();
+            if (!serverRunning) {
+                this.showServerNotRunningMessage();
+                return;
+            }
+            
             await this.client.connect(playerName);
             
             this.client.joinPrivateRoom(roomCode);
@@ -497,6 +526,72 @@ class MultiplayerUI {
             isReady: false,
             isLeader: false
         };
+    }
+
+    // Check if server is running
+    async checkServerStatus() {
+        try {
+            const serverUrl = this.client.serverUrl;
+            const response = await fetch(`${serverUrl}/health`, {
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-cache'
+            });
+            return response.ok;
+        } catch (error) {
+            console.log('Server not running:', error);
+            return false;
+        }
+    }
+
+    // Show message when server is not running
+    showServerNotRunningMessage() {
+        this.hideAllScreens();
+        
+        // Create a custom message screen
+        const messageHTML = `
+            <div class="server-message-overlay">
+                <div class="server-message-card">
+                    <h2>🎮 Multiplayer Server Not Running</h2>
+                    <p>To play multiplayer, you need to start the game server first.</p>
+                    
+                    <div class="server-instructions">
+                        <h3>How to start the server:</h3>
+                        <ol>
+                            <li>Open a terminal/command prompt in the game folder</li>
+                            <li>Run: <code>node server.js</code></li>
+                            <li>Or double-click: <code>start.bat</code></li>
+                        </ol>
+                        <p class="note">The server will run on <strong>http://localhost:3001</strong></p>
+                    </div>
+                    
+                    <div class="server-message-buttons">
+                        <button class="btn primary-btn" id="retry-connection-btn">Retry Connection</button>
+                        <button class="btn secondary-btn" id="back-from-server-msg-btn">Back to Menu</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing message if any
+        const existingMessage = document.querySelector('.server-message-overlay');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Add message to body
+        document.body.insertAdjacentHTML('beforeend', messageHTML);
+        
+        // Add event listeners
+        document.getElementById('retry-connection-btn').addEventListener('click', () => {
+            document.querySelector('.server-message-overlay').remove();
+            this.showMultiplayerMenu();
+        });
+        
+        document.getElementById('back-from-server-msg-btn').addEventListener('click', () => {
+            document.querySelector('.server-message-overlay').remove();
+            this.showMultiplayerMenu();
+        });
     }
 }
 
