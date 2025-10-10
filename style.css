@@ -8879,190 +8879,269 @@ rver Not Running Message Overlay */
 }
 
 
-/* ========================================
-   COMPREHENSIVE MOBILE FIXES
-   ======================================== */
+
+
+/* ============================================================================
+   PROFESSIONAL MOBILE LAYOUT - COMPLETE REWRITE
+   ============================================================================ */
 
 @media (max-width: 768px) {
-    /* Fix setup screens to fill viewport properly */
-    .setup-screen {
-        padding: 0 !important;
+    
+    /* ===== CORE LAYOUT ===== */
+    
+    /* Reset and fix viewport */
+    html, body {
+        width: 100vw !important;
         height: 100vh !important;
         height: -webkit-fill-available !important;
+        overflow: hidden !important;
+        position: fixed !important;
+    }
+    
+    /* Setup screens - full viewport */
+    .setup-screen {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: -webkit-fill-available !important;
+        padding: 0 !important;
+        margin: 0 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        overflow-y: auto !important;
+        overflow: hidden !important;
     }
-
-    /* Fix card content sizing on mobile */
+    
+    /* Card content - properly sized container */
     .setup-screen .card-content {
         width: calc(100vw - 2rem) !important;
         max-width: calc(100vw - 2rem) !important;
-        min-height: auto !important;
-        max-height: calc(100vh - 6rem) !important;
+        height: auto !important;
+        max-height: calc(100vh - 8rem) !important;
+        margin: 0 1rem !important;
         padding: 1.5rem 1rem !important;
-        margin: 1rem !important;
-        background: rgba(20, 20, 30, 0.95) !important;
-        border: 2px solid var(--primary-color) !important;
-        box-shadow: 0 8px 32px rgba(0, 238, 255, 0.3) !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
+        background: rgba(15, 15, 25, 0.98) !important;
+        border: 2px solid rgba(0, 238, 255, 0.5) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 8px 32px rgba(0, 238, 255, 0.2) !important;
         display: flex !important;
         flex-direction: column !important;
         gap: 1rem !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
     }
-
-    /* Fix button styling on mobile */
-    .setup-screen .btn {
-        width: 100% !important;
-        padding: 1rem 1.5rem !important;
-        font-size: 1rem !important;
-        font-weight: 600 !important;
-        margin: 0.5rem 0 !important;
-        border-radius: 8px !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-    }
-
-    /* Primary buttons - white background */
-    .setup-screen .btn.primary-btn {
-        background: var(--text-color-light) !important;
-        color: var(--primary-bg) !important;
-        border: 2px solid var(--text-color-light) !important;
-    }
-
-    /* Secondary buttons - outlined */
-    .setup-screen .btn.secondary-btn {
-        background: transparent !important;
-        color: var(--text-color-light) !important;
-        border: 2px solid var(--text-color-dark) !important;
-    }
-
-    /* Fix heading visibility */
+    
+    /* ===== TYPOGRAPHY ===== */
+    
+    /* Main headings */
     .setup-screen h2 {
-        color: var(--text-color-light) !important;
-        font-size: 1.3rem !important;
-        margin: 0 0 0.5rem 0 !important;
-        text-align: center !important;
+        color: #ffffff !important;
+        font-size: 1.4rem !important;
         font-weight: 700 !important;
+        text-align: center !important;
+        margin: 0 0 0.75rem 0 !important;
+        padding: 0 !important;
         flex-shrink: 0 !important;
     }
-
-    #team-setup-screen h2 {
-        font-size: 1.2rem !important;
-        margin: 0 0 0.25rem 0 !important;
+    
+    /* Subheadings */
+    .setup-screen h3 {
+        color: #ffffff !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        margin: 0 0 0.5rem 0 !important;
+        padding: 0 !important;
     }
-
-    /* Fix input fields */
-    .setup-screen input[type="text"],
+    
+    /* Instruction text */
+    .mobile-instruction,
+    .setup-screen > .card-content > p {
+        color: rgba(255, 255, 255, 0.6) !important;
+        font-size: 0.85rem !important;
+        text-align: center !important;
+        margin: 0 0 0.5rem 0 !important;
+        padding: 0 !important;
+        line-height: 1.4 !important;
+        flex-shrink: 0 !important;
+    }
+    
+    /* Hide duplicate instructions in team setup */
+    .team-setup-container p,
+    .team-setup-container .mobile-instruction {
+        display: none !important;
+    }
+    
+    /* ===== BUTTONS ===== */
+    
+    /* All buttons */
+    .setup-screen .btn {
+        width: 100% !important;
+        padding: 0.875rem 1rem !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        border-radius: 8px !important;
+        margin: 0.25rem 0 !important;
+        flex-shrink: 0 !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    /* Primary buttons */
+    .setup-screen .btn.primary-btn {
+        background: #ffffff !important;
+        color: #0a0a0f !important;
+        border: 2px solid #ffffff !important;
+    }
+    
+    /* Secondary buttons */
+    .setup-screen .btn.secondary-btn {
+        background: transparent !important;
+        color: #ffffff !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    }
+    
+    /* ===== INPUTS ===== */
+    
+    /* Text inputs */
+    .setup-screen input[type="text"] {
+        width: 100% !important;
+        padding: 0.875rem !important;
+        font-size: 1rem !important;
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 2px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 8px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+    
+    .setup-screen input[type="text"]::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
+    }
+    
+    /* Range sliders */
     .setup-screen input[type="range"] {
         width: 100% !important;
-        padding: 1rem !important;
-        font-size: 1rem !important;
-        background: rgba(255, 255, 255, 0.1) !important;
-        border: 2px solid var(--border-color) !important;
-        color: var(--text-color-light) !important;
-        border-radius: 8px !important;
+        margin: 0.5rem 0 !important;
     }
-
-    /* Fix placeholder text */
-    .setup-screen input::placeholder {
-        color: var(--text-color-dark) !important;
-        opacity: 0.7 !important;
-    }
-
-    /* Fix progress dots */
+    
+    /* ===== PROGRESS DOTS ===== */
+    
     .setup-progress {
-        display: flex !important;
-        justify-content: center !important;
-        gap: 0.8rem !important;
-        margin-bottom: 1.5rem !important;
-        padding: 0.5rem !important;
         position: fixed !important;
-        top: 1rem !important;
+        top: 2rem !important;
         left: 50% !important;
         transform: translateX(-50%) !important;
+        display: flex !important;
+        gap: 0.75rem !important;
+        padding: 0.5rem 1rem !important;
+        background: rgba(0, 0, 0, 0.5) !important;
+        border-radius: 20px !important;
         z-index: 10000 !important;
     }
-
+    
     .progress-dot {
-        width: 12px !important;
-        height: 12px !important;
+        width: 10px !important;
+        height: 10px !important;
         border-radius: 50% !important;
         background: rgba(255, 255, 255, 0.3) !important;
         transition: all 0.3s ease !important;
     }
-
+    
     .progress-dot.active {
-        background: var(--primary-color) !important;
-        box-shadow: 0 0 10px var(--primary-color) !important;
-        transform: scale(1.2) !important;
+        background: #00eeff !important;
+        box-shadow: 0 0 10px #00eeff !important;
+        transform: scale(1.3) !important;
     }
-
-    /* Fix slider value display */
-    .slider-value-container {
-        color: var(--text-color-light) !important;
-        font-size: 1.2rem !important;
-        font-weight: 600 !important;
-        text-align: center !important;
-        margin: 1rem 0 !important;
-    }
-
-    /* Fix difficulty buttons */
-    .difficulty-slots {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 1rem !important;
-        width: 100% !important;
-    }
-
-    /* Fix team setup on mobile */
-    .team-setup-container {
-        background: transparent !important;
-        padding: 0 !important;
-        border: none !important;
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 0.75rem !important;
-        width: 100% !important;
-    }
-
-    /* Fix team setup screen specifically */
+    
+    /* ===== TEAM SETUP SPECIFIC ===== */
+    
+    /* Team setup screen adjustments */
     #team-setup-screen .card-content {
-        gap: 0.5rem !important;
         padding: 1rem 0.75rem !important;
-        max-height: calc(100vh - 4rem) !important;
+        gap: 0.75rem !important;
     }
-
-    /* Fix players setup container */
-    .players-setup {
+    
+    #team-setup-screen h2 {
+        font-size: 1.25rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Team setup container */
+    .team-setup-container {
         display: flex !important;
         flex-direction: column !important;
         gap: 0.75rem !important;
         width: 100% !important;
         flex: 1 !important;
         min-height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
     }
-
-    /* Fix available players section */
-    .available-players-section {
+    
+    /* Add player section */
+    .add-player-section {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        padding: 0.75rem !important;
         background: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid var(--border-color) !important;
+        border: 2px dashed rgba(255, 255, 255, 0.2) !important;
+        border-radius: 8px !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .add-player-section input {
+        margin: 0 !important;
+    }
+    
+    .add-player-section button {
+        margin: 0 !important;
+    }
+    
+    /* Players setup container */
+    .players-setup {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+    
+    /* Available players section */
+    .available-players-section {
+        flex-shrink: 0 !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 8px !important;
         padding: 0.75rem !important;
-        max-height: 20vh !important;
+        max-height: 25vh !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
     }
-
+    
     .available-players-section h3 {
-        font-size: 1rem !important;
-        margin: 0 0 0.5rem 0 !important;
-        color: var(--text-color-light) !important;
+        font-size: 0.95rem !important;
+        margin-bottom: 0.5rem !important;
+        text-align: center !important;
     }
-
-    /* Make teams section scrollable */
+    
+    #available-players-setup {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        min-height: 60px !important;
+    }
+    
+    /* Teams section */
     .teams-setup {
         display: flex !important;
         flex-direction: column !important;
@@ -9071,155 +9150,125 @@ rver Not Running Message Overlay */
         min-height: 0 !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
+        padding-bottom: 0.5rem !important;
     }
-
-    /* Fix individual team containers */
+    
+    /* Individual team containers */
     .team-setup {
+        flex-shrink: 0 !important;
         background: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid var(--border-color) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 8px !important;
         padding: 0.75rem !important;
-        flex-shrink: 0 !important;
     }
-
+    
     .team-setup h3 {
-        font-size: 1rem !important;
-        margin: 0 0 0.5rem 0 !important;
-        color: var(--text-color-light) !important;
+        font-size: 0.95rem !important;
+        margin-bottom: 0.5rem !important;
+        text-align: center !important;
     }
-
-    /* Fix leader slot */
+    
+    /* Leader slot */
     .leader-slot {
         background: rgba(255, 255, 255, 0.08) !important;
-        border: 1px dashed var(--border-color) !important;
+        border: 1px dashed rgba(255, 255, 255, 0.2) !important;
         border-radius: 6px !important;
         padding: 0.5rem !important;
         margin-bottom: 0.5rem !important;
     }
-
+    
     .leader-label {
-        font-size: 0.8rem !important;
-        color: var(--text-color-dark) !important;
         display: block !important;
+        font-size: 0.75rem !important;
+        color: rgba(255, 255, 255, 0.5) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
         margin-bottom: 0.25rem !important;
     }
-
-    /* Fix players list in teams */
-    .team-setup .players-list {
-        min-height: 60px !important;
-        max-height: 150px !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        padding: 0.25rem !important;
+    
+    .leader-container {
+        min-height: 40px !important;
         background: rgba(0, 0, 0, 0.2) !important;
-        border-radius: 6px !important;
+        border-radius: 4px !important;
     }
-
-    #available-players-setup {
-        min-height: 80px !important;
-        max-height: 15vh !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-    }
-
-    /* Fix player elements */
-    .player {
-        background: rgba(255, 255, 255, 0.1) !important;
-        border: 2px solid var(--border-color) !important;
-        color: var(--text-color-light) !important;
-        padding: 0.75rem !important;
-        border-radius: 8px !important;
-        margin: 0.25rem 0 !important;
-        font-size: 0.9rem !important;
-        min-height: 44px !important;
-        display: flex !important;
-        align-items: center !important;
-    }
-
-    /* Fix add player section */
-    .add-player-section {
-        background: rgba(255, 255, 255, 0.05) !important;
-        padding: 0.75rem !important;
-        border-radius: 8px !important;
-        border: 2px dashed var(--border-color) !important;
+    
+    /* Players lists */
+    .players-list {
         display: flex !important;
         flex-direction: column !important;
         gap: 0.5rem !important;
-        flex-shrink: 0 !important;
-    }
-
-    .add-player-section input {
-        width: 100% !important;
-        margin: 0 !important;
-    }
-
-    .add-player-section button {
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0.75rem !important;
-    }
-
-    /* Fix instruction text */
-    .mobile-instruction {
-        color: var(--text-color-dark) !important;
-        font-size: 0.85rem !important;
-        text-align: center !important;
-        margin: 0 0 0.5rem 0 !important;
-        line-height: 1.3 !important;
-        flex-shrink: 0 !important;
-        font-style: italic !important;
-    }
-
-    /* Hide any duplicate instruction text inside team-setup-container */
-    .team-setup-container p {
-        display: none !important;
-    }
-
-    /* Fix multiplayer options */
-    .multiplayer-options {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 1rem !important;
-        width: 100% !important;
-    }
-
-    /* Fix connection status */
-    .connection-status {
-        color: var(--primary-color) !important;
-        font-size: 1rem !important;
-        text-align: center !important;
+        min-height: 50px !important;
+        max-height: 120px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
         padding: 0.5rem !important;
+        background: rgba(0, 0, 0, 0.2) !important;
+        border-radius: 6px !important;
     }
-
-    /* Fix game mode options */
-    .game-mode-options {
+    
+    /* Player elements */
+    .player {
         display: flex !important;
-        flex-direction: column !important;
-        gap: 1rem !important;
-        width: 100% !important;
+        align-items: center !important;
+        padding: 0.625rem 0.75rem !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 6px !important;
+        color: #ffffff !important;
+        font-size: 0.9rem !important;
+        margin: 0 !important;
+        min-height: 40px !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
     }
-
-    /* Fix bottom buttons to stay visible */
+    
+    /* Continue/Confirm buttons */
     #confirm-teams-btn,
     #final-start-game-btn {
         margin-top: 0.5rem !important;
         flex-shrink: 0 !important;
-        position: sticky !important;
-        bottom: 0 !important;
-        background: var(--text-color-light) !important;
-        z-index: 10 !important;
+    }
+    
+    /* ===== GAME MODE & DIFFICULTY ===== */
+    
+    .game-mode-options,
+    .difficulty-slots,
+    .multiplayer-options {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+        width: 100% !important;
+    }
+    
+    /* ===== SLIDER VALUES ===== */
+    
+    .slider-value-container {
+        color: #ffffff !important;
+        font-size: 1.2rem !important;
+        font-weight: 600 !important;
+        text-align: center !important;
+        margin: 0.75rem 0 !important;
+    }
+    
+    .player-slider-container {
+        width: 100% !important;
+        margin: 0.5rem 0 !important;
     }
 }
 
 /* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
     @media (max-width: 768px) {
-        .setup-screen {
-            min-height: -webkit-fill-available !important;
+        html, body {
+            height: -webkit-fill-available !important;
         }
-
+        
+        .setup-screen {
+            height: -webkit-fill-available !important;
+        }
+        
         .setup-screen .card-content {
-            max-height: calc(-webkit-fill-available - 4rem) !important;
+            max-height: calc(-webkit-fill-available - 8rem) !important;
         }
     }
 }
