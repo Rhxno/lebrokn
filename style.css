@@ -176,30 +176,36 @@ input::placeholder {
 /* ===== RANGE SLIDERS ===== */
 input[type="range"] {
     width: 100%;
-    height: 8px;
+    height: 6px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
+    border-radius: 3px;
     outline: none;
     -webkit-appearance: none;
+    touch-action: none;
 }
 
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 20px;
     height: 20px;
-    background: var(--primary-color);
+    background: var(--text-color-light);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 238, 255, 0.4);
+    transition: none;
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+    transform: scale(1.15);
 }
 
 input[type="range"]::-moz-range-thumb {
     width: 20px;
     height: 20px;
-    background: var(--primary-color);
+    background: var(--text-color-light);
     border-radius: 50%;
     cursor: pointer;
     border: none;
+    transition: none;
 }
 
 /* ===== PROGRESS DOTS ===== */
@@ -309,18 +315,29 @@ input[type="range"]::-moz-range-thumb {
 .player {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1rem;
-    background: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.08);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 4px;
     color: var(--text-color-light);
     cursor: pointer;
-    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    min-height: 36px;
+    will-change: transform;
 }
 
 .player:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateX(4px);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.player.dragging {
+    opacity: 0.5;
+    transition: none !important;
+}
+
+.drag-clone {
+    transition: none !important;
+    pointer-events: none;
 }
 
 /* ===== GAME CONTAINER ===== */
@@ -518,9 +535,10 @@ input[type="range"]::-moz-range-thumb {
     }
 
     .player {
-        padding: 0.5rem 0.6rem !important;
+        padding: 0.45rem 0.6rem !important;
         font-size: 0.85rem !important;
-        min-height: 36px !important;
+        min-height: 34px !important;
+        border-radius: 4px !important;
     }
 
     #game-container {
@@ -558,4 +576,164 @@ input[type="range"]::-moz-range-thumb {
             max-height: calc(-webkit-fill-available - 8rem) !important;
         }
     }
+}
+
+/* =
+==== TIMER SETUP STYLING ===== */
+.timer-setup-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.timer-toggle-section {
+    display: flex;
+    justify-content: center;
+}
+
+.sleek-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.sleek-toggle input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 13px;
+    transition: all 0.2s ease;
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: var(--text-color-dark);
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.sleek-toggle input:checked + .toggle-switch {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sleek-toggle input:checked + .toggle-switch::after {
+    left: 24px;
+    background: var(--text-color-light);
+}
+
+.toggle-text {
+    font-size: 1rem;
+    color: var(--text-color-light);
+    font-weight: 500;
+}
+
+.timer-duration-section h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.timer-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.timer-option-btn {
+    padding: 0.75rem 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color-light);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.timer-option-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.timer-option-btn.selected {
+    background: var(--text-color-light);
+    color: var(--primary-bg);
+    border-color: var(--text-color-light);
+}
+
+.custom-timer-section {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.custom-timer-label {
+    font-size: 0.9rem;
+    color: var(--text-color-dark);
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+
+.custom-timer-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.custom-timer-control input[type="range"] {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    outline: none;
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.custom-timer-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--text-color-light);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.custom-timer-control input[type="range"]::-webkit-slider-thumb:active {
+    transform: scale(1.2);
+}
+
+.custom-timer-control input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--text-color-light);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+.timer-display {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color-light);
+    font-variant-numeric: tabular-nums;
 }
