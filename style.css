@@ -8877,3 +8877,192 @@ rver Not Running Message Overlay */
         max-width: 100%;
     }
 }
+
+
+/* ========================================
+   COMPREHENSIVE MOBILE FIXES
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Fix card content sizing on mobile */
+    .setup-screen .card-content {
+        width: calc(100% - 2rem) !important;
+        max-width: calc(100% - 2rem) !important;
+        min-height: auto !important;
+        padding: 2rem 1.5rem !important;
+        margin: 1rem !important;
+        background: rgba(20, 20, 30, 0.95) !important;
+        border: 2px solid var(--primary-color) !important;
+        box-shadow: 0 8px 32px rgba(0, 238, 255, 0.3) !important;
+    }
+
+    /* Fix button styling on mobile */
+    .setup-screen .btn {
+        width: 100% !important;
+        padding: 1rem 1.5rem !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        margin: 0.5rem 0 !important;
+        border-radius: 8px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    /* Primary buttons - white background */
+    .setup-screen .btn.primary-btn {
+        background: var(--text-color-light) !important;
+        color: var(--primary-bg) !important;
+        border: 2px solid var(--text-color-light) !important;
+    }
+
+    /* Secondary buttons - outlined */
+    .setup-screen .btn.secondary-btn {
+        background: transparent !important;
+        color: var(--text-color-light) !important;
+        border: 2px solid var(--text-color-dark) !important;
+    }
+
+    /* Fix heading visibility */
+    .setup-screen h2 {
+        color: var(--text-color-light) !important;
+        font-size: 1.8rem !important;
+        margin-bottom: 1.5rem !important;
+        text-align: center !important;
+        font-weight: 700 !important;
+    }
+
+    /* Fix input fields */
+    .setup-screen input[type="text"],
+    .setup-screen input[type="range"] {
+        width: 100% !important;
+        padding: 1rem !important;
+        font-size: 1rem !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 2px solid var(--border-color) !important;
+        color: var(--text-color-light) !important;
+        border-radius: 8px !important;
+    }
+
+    /* Fix placeholder text */
+    .setup-screen input::placeholder {
+        color: var(--text-color-dark) !important;
+        opacity: 0.7 !important;
+    }
+
+    /* Fix progress dots */
+    .setup-progress {
+        display: flex !important;
+        justify-content: center !important;
+        gap: 0.8rem !important;
+        margin-bottom: 1.5rem !important;
+        padding: 0.5rem !important;
+        position: fixed !important;
+        top: 1rem !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        z-index: 10000 !important;
+    }
+
+    .progress-dot {
+        width: 12px !important;
+        height: 12px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.3) !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .progress-dot.active {
+        background: var(--primary-color) !important;
+        box-shadow: 0 0 10px var(--primary-color) !important;
+        transform: scale(1.2) !important;
+    }
+
+    /* Fix slider value display */
+    .slider-value-container {
+        color: var(--text-color-light) !important;
+        font-size: 1.2rem !important;
+        font-weight: 600 !important;
+        text-align: center !important;
+        margin: 1rem 0 !important;
+    }
+
+    /* Fix difficulty buttons */
+    .difficulty-slots {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+        width: 100% !important;
+    }
+
+    /* Fix team setup on mobile */
+    .team-setup-container {
+        background: rgba(20, 20, 30, 0.8) !important;
+        padding: 1.5rem !important;
+        border-radius: 12px !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+    /* Fix player elements */
+    .player {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 2px solid var(--border-color) !important;
+        color: var(--text-color-light) !important;
+        padding: 1rem !important;
+        border-radius: 8px !important;
+        margin: 0.5rem 0 !important;
+    }
+
+    /* Fix add player section */
+    .add-player-section {
+        background: rgba(255, 255, 255, 0.05) !important;
+        padding: 1rem !important;
+        border-radius: 8px !important;
+        border: 2px dashed var(--border-color) !important;
+    }
+
+    /* Fix instruction text */
+    .team-setup-container p,
+    .setup-screen p {
+        color: var(--text-color-dark) !important;
+        font-size: 0.95rem !important;
+        text-align: center !important;
+        margin: 0.5rem 0 !important;
+    }
+
+    /* Fix multiplayer options */
+    .multiplayer-options {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+        width: 100% !important;
+    }
+
+    /* Fix connection status */
+    .connection-status {
+        color: var(--primary-color) !important;
+        font-size: 1rem !important;
+        text-align: center !important;
+        padding: 0.5rem !important;
+    }
+
+    /* Fix game mode options */
+    .game-mode-options {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+        width: 100% !important;
+    }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+    @media (max-width: 768px) {
+        .setup-screen {
+            min-height: -webkit-fill-available !important;
+        }
+
+        .setup-screen .card-content {
+            max-height: calc(-webkit-fill-available - 4rem) !important;
+        }
+    }
+}
