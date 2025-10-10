@@ -346,11 +346,13 @@ input[type="range"]::-moz-range-thumb {
     width: 100%;
     min-height: 100vh;
     padding: 2rem;
-    background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+    background: var(--primary-bg);
 }
 
 #game-container.show {
-    display: block;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* ===== GAME HEADER ===== */

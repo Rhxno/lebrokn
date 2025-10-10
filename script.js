@@ -1551,13 +1551,21 @@ async function startGame() {
     });
 
     // Hide setup screens and show game container
+    console.log('Hiding setup screens and showing game container');
     document.querySelectorAll('.setup-screen').forEach(screen => {
         screen.style.display = 'none';
+        screen.classList.remove('active');
     });
     const gameContainer = document.getElementById('game-container');
-    gameContainer.style.display = 'block';
-    gameContainer.style.visibility = 'visible';
-    gameContainer.style.opacity = '1';
+    console.log('Game container found:', !!gameContainer);
+    if (gameContainer) {
+        gameContainer.style.display = 'block';
+        gameContainer.style.visibility = 'visible';
+        gameContainer.style.opacity = '1';
+        gameContainer.classList.add('show');
+        console.log('Game container display:', window.getComputedStyle(gameContainer).display);
+        console.log('Game container visibility:', window.getComputedStyle(gameContainer).visibility);
+    }
 
     // Update team log headers with leader names
     updateTeamLogHeaders();
