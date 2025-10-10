@@ -1,0 +1,530 @@
+/* ============================================================================
+   PASSWORD GAME - CLEAN CSS (DEBLOATED)
+   ============================================================================ */
+
+/* ===== CSS VARIABLES ===== */
+:root {
+    --primary-bg: #0a0a0f;
+    --secondary-bg: #14141e;
+    --tertiary-bg: #1e1e2d;
+    --quaternary-bg: #28283c;
+    --primary-color: #00eeff;
+    --secondary-color: #00b8d4;
+    --text-color-light: #ffffff;
+    --text-color-dark: #a0a0b0;
+    --border-color: rgba(0, 238, 255, 0.3);
+    --card-bg: rgba(20, 20, 30, 0.95);
+    --card-shadow: 0 8px 32px rgba(0, 238, 255, 0.2);
+    --transition-duration: 0.3s;
+    --transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== GLOBAL RESET ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+    color: var(--text-color-light);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== CONTAINER ===== */
+.container {
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* ===== SETUP SCREENS ===== */
+.setup-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    transition: all 0.8s var(--transition-easing);
+    transform: translateX(100%);
+    opacity: 0;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.setup-screen.active {
+    display: flex !important;
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 1001 !important;
+}
+
+/* ===== CARD CONTENT ===== */
+.card-content {
+    width: 100%;
+    max-width: 500px;
+    padding: 2.5rem 2rem;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ===== TYPOGRAPHY ===== */
+h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-color-light);
+    margin-bottom: 1rem;
+}
+
+h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-color-light);
+    margin-bottom: 0.75rem;
+}
+
+p {
+    font-size: 1rem;
+    color: var(--text-color-dark);
+    line-height: 1.6;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 2px solid;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    display: inline-block;
+}
+
+.btn.primary-btn {
+    background: var(--text-color-light);
+    color: var(--primary-bg);
+    border-color: var(--text-color-light);
+}
+
+.btn.primary-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 238, 255, 0.4);
+}
+
+.btn.secondary-btn {
+    background: transparent;
+    color: var(--text-color-light);
+    border-color: var(--text-color-dark);
+}
+
+.btn.secondary-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--text-color-light);
+}
+
+/* ===== INPUTS ===== */
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    color: var(--text-color-light);
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 238, 255, 0.1);
+}
+
+input::placeholder {
+    color: var(--text-color-dark);
+    opacity: 0.6;
+}
+
+/* ===== RANGE SLIDERS ===== */
+input[type="range"] {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 238, 255, 0.4);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+/* ===== PROGRESS DOTS ===== */
+.setup-progress {
+    position: fixed;
+    top: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 20px;
+    z-index: 10000;
+}
+
+.progress-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.progress-dot.active {
+    background: var(--primary-color);
+    box-shadow: 0 0 10px var(--primary-color);
+    transform: scale(1.3);
+}
+
+/* ===== GAME MODE OPTIONS ===== */
+.game-mode-options,
+.difficulty-slots,
+.multiplayer-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+}
+
+/* ===== TEAM SETUP ===== */
+.team-setup-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+}
+
+.add-player-section {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+}
+
+.players-setup {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.available-players-section,
+.teams-setup {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.team-setup {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.leader-slot {
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+}
+
+.leader-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-color-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    min-height: 60px;
+}
+
+.player {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.player:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateX(4px);
+}
+
+/* ===== GAME CONTAINER ===== */
+#game-container {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+}
+
+#game-container.show {
+    display: block;
+}
+
+/* ===== GAME HEADER ===== */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+/* ===== TEAMS DISPLAY ===== */
+.teams-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.team {
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.team.active {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 20px rgba(0, 238, 255, 0.3);
+}
+
+/* ===== WORD DISPLAY ===== */
+.word-section {
+    padding: 2rem;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+#current-word {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    margin: 1rem 0;
+}
+
+/* ===== TIMER ===== */
+.timer-display {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.timer-display.warning {
+    color: #ff6b6b;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* ===== CONTROLS ===== */
+.game-controls-panel {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+    html, body {
+        width: 100vw !important;
+        height: 100vh !important;
+        height: -webkit-fill-available !important;
+        overflow: hidden !important;
+        position: fixed !important;
+    }
+    
+    .setup-screen {
+        position: fixed !important;
+        padding: 0 !important;
+        height: 100vh !important;
+        height: -webkit-fill-available !important;
+    }
+    
+    .card-content {
+        width: calc(100vw - 2rem) !important;
+        max-width: calc(100vw - 2rem) !important;
+        max-height: calc(100vh - 8rem) !important;
+        margin: 0 1rem !important;
+        padding: 1.5rem 1rem !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    h2 {
+        font-size: 1.4rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .btn {
+        width: 100% !important;
+        padding: 0.875rem 1rem !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .team-setup-container {
+        gap: 0.75rem !important;
+    }
+    
+    .add-player-section {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        padding: 0.75rem !important;
+    }
+    
+    .players-setup {
+        gap: 0.75rem !important;
+    }
+    
+    .available-players-section {
+        max-height: 25vh !important;
+        overflow-y: auto !important;
+    }
+    
+    .teams-setup {
+        max-height: 40vh !important;
+        overflow-y: auto !important;
+    }
+    
+    .team-setup {
+        padding: 0.75rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .players-list {
+        max-height: 120px !important;
+        overflow-y: auto !important;
+    }
+    
+    .player {
+        padding: 0.625rem 0.75rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    #game-container {
+        padding: 1rem !important;
+    }
+    
+    .teams-container {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    #current-word {
+        font-size: 2rem !important;
+    }
+    
+    .timer-display {
+        font-size: 1.8rem !important;
+    }
+}
+
+/* iOS Safari fixes */
+@supports (-webkit-touch-callout: none) {
+    @media (max-width: 768px) {
+        html, body {
+            height: -webkit-fill-available !important;
+        }
+        
+        .setup-screen {
+            height: -webkit-fill-available !important;
+        }
+        
+        .card-content {
+            max-height: calc(-webkit-fill-available - 8rem) !important;
+        }
+    }
+}
