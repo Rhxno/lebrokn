@@ -26,7 +26,8 @@
     box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
     width: 100%;
     height: 100%;
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -401,8 +402,15 @@ input[type="range"]::-moz-range-thumb {
 }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
 }
 
 /* ===== CONTROLS ===== */
@@ -419,21 +427,23 @@ input[type="range"]::-moz-range-thumb {
 
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 768px) {
-    html, body {
+
+    html,
+    body {
         width: 100vw !important;
         height: 100vh !important;
         height: -webkit-fill-available !important;
         overflow: hidden !important;
         position: fixed !important;
     }
-    
+
     .setup-screen {
         position: fixed !important;
         padding: 0 !important;
         height: 100vh !important;
         height: -webkit-fill-available !important;
     }
-    
+
     .card-content {
         width: calc(100vw - 2rem) !important;
         max-width: calc(100vw - 2rem) !important;
@@ -443,70 +453,70 @@ input[type="range"]::-moz-range-thumb {
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
     }
-    
+
     h2 {
         font-size: 1.4rem !important;
         margin-bottom: 0.75rem !important;
     }
-    
+
     .btn {
         width: 100% !important;
         padding: 0.875rem 1rem !important;
         font-size: 0.95rem !important;
     }
-    
+
     .team-setup-container {
         gap: 0.75rem !important;
     }
-    
+
     .add-player-section {
         flex-direction: column !important;
         gap: 0.5rem !important;
         padding: 0.75rem !important;
     }
-    
+
     .players-setup {
         gap: 0.75rem !important;
     }
-    
+
     .available-players-section {
         max-height: 25vh !important;
         overflow-y: auto !important;
     }
-    
+
     .teams-setup {
         max-height: 40vh !important;
         overflow-y: auto !important;
     }
-    
+
     .team-setup {
         padding: 0.75rem !important;
         margin-bottom: 0.75rem !important;
     }
-    
+
     .players-list {
         max-height: 120px !important;
         overflow-y: auto !important;
     }
-    
+
     .player {
         padding: 0.625rem 0.75rem !important;
         font-size: 0.9rem !important;
     }
-    
+
     #game-container {
         padding: 1rem !important;
     }
-    
+
     .teams-container {
         grid-template-columns: 1fr !important;
         gap: 1rem !important;
     }
-    
+
     #current-word {
         font-size: 2rem !important;
     }
-    
+
     .timer-display {
         font-size: 1.8rem !important;
     }
@@ -515,14 +525,16 @@ input[type="range"]::-moz-range-thumb {
 /* iOS Safari fixes */
 @supports (-webkit-touch-callout: none) {
     @media (max-width: 768px) {
-        html, body {
+
+        html,
+        body {
             height: -webkit-fill-available !important;
         }
-        
+
         .setup-screen {
             height: -webkit-fill-available !important;
         }
-        
+
         .card-content {
             max-height: calc(-webkit-fill-available - 8rem) !important;
         }
