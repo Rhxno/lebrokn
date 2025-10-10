@@ -1,171 +1,361 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Password - A fun word party game for teams. Guess words based on one-word clues!">
+    <meta name="keywords" content="password game, word game, party game, team game, guessing game">
+    <meta name="author" content="Password Game">
     <title>Password - Word Party Game</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Socket.IO for multiplayer -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
+
 <body>
     <div class="container">
-        <section class="full-screen-overlay active" id="player-select-screen">
+        <section class="setup-screen active" id="game-mode-select-screen">
+            <div class="card-content">
+                <h2>Password - Word Party Game</h2>
+                <div class="game-mode-options">
+                    <button class="btn primary-btn" id="single-player-btn">Single Player</button>
+                    <button class="btn secondary-btn" id="multiplayer-btn">Multiplayer</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="setup-screen" id="player-select-screen">
             <div class="card-content">
                 <h2>Choose Number of Players</h2>
                 <div class="player-slider-container">
-                    <input type="range" min="2" max="10" value="2" class="player-slider" id="player-slider-input" step="1">
+                    <input type="range" min="4" max="10" value="4" class="player-slider" id="player-slider-input"
+                        step="1">
                     <div class="slider-value-container">
-                        Players: [<span id="slider-value">2</span>]
+                        Players: [<span id="slider-value">4</span>]
                     </div>
                 </div>
-                <button class="btn primary-btn" id="confirm-player-count-btn" style="margin-top: 20px;">Confirm Players</button>
+                <button class="btn primary-btn" id="confirm-player-count-btn">Continue</button>
+                <button class="btn secondary-btn" id="back-to-mode-select-btn">Back</button>
             </div>
         </section>
 
-        <section class="full-screen-overlay" id="difficulty-select-screen">
+        <section class="setup-screen" id="difficulty-select-screen">
             <div class="card-content">
                 <h2>Choose Difficulty</h2>
                 <div class="difficulty-slots">
-                    <button class="btn primary-btn difficulty-slot-btn" onclick="selectDifficulty('easy')">Easy</button>
-                    <button class="btn primary-btn difficulty-slot-btn" onclick="selectDifficulty('medium')">Medium</button>
-                    <button class="btn primary-btn difficulty-slot-btn" onclick="selectDifficulty('hard')">Hard</button>
+                    <button class="btn primary-btn difficulty-slot-btn"
+                        onclick="selectDifficulty('easy', event)">Easy</button>
+                    <button class="btn primary-btn difficulty-slot-btn"
+                        onclick="selectDifficulty('medium', event)">Medium</button>
+                    <button class="btn primary-btn difficulty-slot-btn"
+                        onclick="selectDifficulty('hard', event)">Hard</button>
                 </div>
             </div>
         </section>
 
-        <div class="full-screen-overlay" id="round-select-screen">
+        <section class="setup-screen" id="round-select-screen">
             <div class="card-content">
                 <h2>Choose Number of Rounds</h2>
-                <div class="options-grid">
-                    <button class="btn primary-btn round-slot-btn" onclick="selectRounds(3)">3 Rounds</button>
-                    <button class="btn primary-btn round-slot-btn" onclick="selectRounds(5)">5 Rounds</button>
-                    <button class="btn primary-btn round-slot-btn" onclick="selectRounds(7)">7 Rounds</button>
-                    <button class="btn primary-btn round-slot-btn" onclick="selectRounds(10)">10 Rounds</button>
+                <div class="player-slider-container">
+                    <input type="range" min="1" max="10" value="1" class="player-slider" id="round-slider-input"
+                        step="1">
+                    <div class="slider-value-container">
+                        Rounds: [<span id="round-slider-value">1</span>]
+                    </div>
                 </div>
+                <button class="btn primary-btn" id="confirm-round-count-btn">Continue</button>
             </div>
-        </div>
+        </section>
 
-        <div id="game-container" style="display: none;">
-            <header class="navbar">
-                <div class="logo">Password</div>
-            </header>
-
-            <main>
-                <section class="game-setup card">
-                    <h2>Game Setup</h2>
-                    <div class="setup-item">
-                        <label for="rounds">Number of Rounds:</label>
-                        <input type="number" id="rounds" min="1" value="5">
+        <section class="setup-screen" id="timer-setup-screen">
+            <div class="card-content">
+                <h2>Timer Settings</h2>
+                <div class="timer-setup-container">
+                    <div class="timer-toggle-section">
+                        <label class="sleek-toggle">
+                            <input type="checkbox" id="enable-timer" checked>
+                            <span class="toggle-switch"></span>
+                            <span class="toggle-text">Enable Round Timer</span>
+                        </label>
                     </div>
-                    <div class="setup-item">
-                        <input type="text" id="player-name" placeholder="Enter player name">
-                        <button class="btn primary-btn" onclick="addPlayer()">Add Player</button>
-                    </div>
-                </section>
 
-                <section class="setup-section card">
-                    <h3>Available Players</h3>
-                    <div id="available-players" class="players-list" ondrop="drop(event)" ondragover="allowDrop(event)">
-                        <!-- No default players here -->
-                    </div>
-                </section>
-
-                <section class="teams">
-                    <div class="team card" id="team1">
-                        <h2>Team 1</h2>
-                        <div class="leader-slot" ondrop="handleTeamDrop(event, 1, true)" ondragover="allowDrop(event)">
-                            <h3>Leader</h3>
-                            <div id="team1-leader" class="leader-container"></div>
+                    <div class="timer-duration-section" id="timer-duration-section">
+                        <h3>Timer Duration</h3>
+                        <div class="timer-options">
+                            <button class="timer-option-btn" data-duration="60">1 MIN</button>
+                            <button class="timer-option-btn selected" data-duration="90">1.5 MIN</button>
+                            <button class="timer-option-btn" data-duration="120">2 MIN</button>
+                            <button class="timer-option-btn" data-duration="180">3 MIN</button>
                         </div>
-                        <div class="players-list" id="team1-players" ondrop="handleTeamDrop(event, 1, false)" ondragover="allowDrop(event)"></div>
-                    </div>
 
-                    <div class="team card" id="team2">
-                        <h2>Team 2</h2>
-                        <div class="leader-slot" ondrop="handleTeamDrop(event, 2, true)" ondragover="allowDrop(event)">
-                            <h3>Leader</h3>
-                            <div id="team2-leader" class="leader-container"></div>
-                        </div>
-                        <div class="players-list" id="team2-players" ondrop="handleTeamDrop(event, 2, false)" ondragover="allowDrop(event)"></div>
-                    </div>
-                </section>
-
-                <section class="game-controls card">
-                    <div class="word-section">
-                        <h3>Current Word:</h3>
-                        <p id="current-word" class="word-display"></p>
-                        <div class="word-controls">
-                            <button class="btn secondary-btn" onclick="generateNewWord()">Generate Word</button>
-                            <button class="btn secondary-btn" id="toggle-word-btn" onclick="toggleWordVisibility()">Hide Word</button>
-                        </div>
-                    </div>
-                    <button class="btn primary-btn" id="start-btn">Start Game</button>
-                </section>
-
-                <section id="referee-controls" style="display: none;">
-                    <div class="team-logs">
-                        <div class="team-log">
-                            <h3>Team 1 Log</h3>
-                            <div class="log-input-container">
-                                <input type="text" id="team1-word-log" placeholder="Enter word for Team 1">
-                                <button class="btn mic-btn" id="mic-btn-1" data-team="1" aria-label="Use Microphone for Team 1">🎤</button>
+                        <div class="custom-timer-section">
+                            <div class="custom-timer-label">Custom Duration</div>
+                            <div class="custom-timer-control">
+                                <input type="range" id="custom-timer" min="30" max="300" value="90" step="15">
+                                <div class="timer-display" id="timer-value"></div>90s
                             </div>
-                            <button class="btn log-btn" onclick="logWord(1)">Log Word</button>
-                            <div id="team1-word-display" class="log-display"></div>
                         </div>
-                        <div class="team-log">
-                            <h3>Team 2 Log</h3>
-                            <div class="log-input-container">
-                                <input type="text" id="team2-word-log" placeholder="Enter word for Team 2">
-                                <button class="btn mic-btn" id="mic-btn-2" data-team="2" aria-label="Use Microphone for Team 2">🎤</button>
+                    </div>
+                </div>
+            </div>
+            <button class="btn primary-btn" id="confirm-timer-btn">Continue</button>
+    </div>
+    </section>
+
+    <section class="setup-screen" id="team-setup-screen">
+        <div class="card-content">
+            <h2>Setup Teams & Players</h2>
+            <p class="mobile-instruction">Tap a player to move them, or long-press and drag</p>
+            <div class="team-setup-container">
+                <div class="add-player-section">
+                    <input type="text" id="player-name-input" placeholder="Enter player name" maxlength="20">
+                    <button class="btn secondary-btn" id="add-player-btn">Add Player</button>
+                </div>
+
+                <div class="players-setup">
+                    <div class="available-players-section">
+                        <h3>Available Players</h3>
+                        <div id="available-players-setup" class="players-list"></div>
+                    </div>
+
+                    <div class="teams-setup">
+                        <div class="team-setup" id="team1-setup">
+                            <h3>Team 1</h3>
+                            <div class="leader-slot" id="team1-leader-setup">
+                                <span class="leader-label">Leader</span>
+                                <div class="leader-container" id="team1-leader-container"></div>
                             </div>
-                            <button class="btn log-btn" onclick="logWord(2)">Log Word</button>
-                            <div id="team2-word-display" class="log-display"></div>
+                            <div class="players-list" id="team1-players-setup"></div>
+                        </div>
+
+                        <div class="team-setup" id="team2-setup">
+                            <h3>Team 2</h3>
+                            <div class="leader-slot" id="team2-leader-setup">
+                                <span class="leader-label">Leader</span>
+                                <div class="leader-container" id="team2-leader-container"></div>
+                            </div>
+                            <div class="players-list" id="team2-players-setup"></div>
                         </div>
                     </div>
-                </section>
+                </div>
+            </div>
+            <button class="btn primary-btn" id="confirm-teams-btn">Continue</button>
+        </div>
+    </section>
 
-                <section class="results-section card" id="results" style="display: none;">
-                    <h2>Game Results</h2>
-                    <div class="results-columns">
-                        <div class="results-column">
-                            <h3>Correct Guesses</h3>
-                            <div id="guess-results"></div>
+    <section class="setup-screen" id="word-generation-screen">
+        <div class="card-content">
+            <h2>Ready to Play!</h2>
+            <div class="word-generation-container">
+                <div class="loading-spinner"></div>
+
+                <div class="word-section">
+                    <h3>Current Word:</h3>
+                    <p id="current-word" class="word-display"></p>
+                    <div class="word-controls">
+                        <button class="btn secondary-btn" onclick="generateNewWord()">Generate Word</button>
+                        <button class="btn secondary-btn" id="toggle-word-btn">Hide Word</button>
+                    </div>
+                </div>
+
+                <div class="game-info">
+                    <p><strong>Players:</strong> <span id="final-player-count"></span></p>
+                    <p><strong>Rounds:</strong> <span id="final-round-count"></span></p>
+                    <p><strong>Difficulty:</strong> <span id="final-difficulty"></span></p>
+                </div>
+
+                <button class="btn primary-btn" id="final-start-game-btn" style="display: none;">Start Game</button>
+            </div>
+        </div>
+    </section>
+
+    <div id="game-container" style="display: none;">
+        <!-- Game Controls Panel -->
+        <div class="game-controls-panel">
+            <button class="control-button active" id="sound-toggle" data-tooltip="Sound On/Off">🔊</button>
+            <button class="control-button active" id="haptic-toggle" data-tooltip="Haptic Feedback">📳</button>
+            <button class="control-button" id="pause-toggle" data-tooltip="Pause/Resume">⏸️</button>
+        </div>
+
+        <header class="navbar">
+            <div class="logo">Password</div>
+        </header>
+
+        <main>
+            <section class="game-screen card">
+                <!-- Game Progress Header -->
+                <div class="game-header">
+                    <div class="game-progress-container">
+                        <div class="round-indicator" id="round-indicator">
+                            <span class="round-text">Round</span>
+                            <span class="round-numbers">
+                                <span id="current-round-display">1</span>
+                                <span class="separator">of</span>
+                                <span id="total-rounds-display">3</span>
+                            </span>
                         </div>
-                        <div class="results-column">
-                            <h3>Hint Effectiveness</h3>
-                            <div id="hint-results"></div>
+
+                        <div class="overall-progress">
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" id="overall-progress-bar"></div>
+                            </div>
+                            <span class="progress-text" id="overall-progress-text">Round 1 of 3</span>
                         </div>
                     </div>
-                </section>
 
-            </main>
-
-            <div class="turn-overlay" id="turn-overlay">
-                <div class="turn-message">
-                    <h2 id="turn-player-name"></h2>
-                    <p id="turn-team-indicator"></p>
+                    <div class="timer-container">
+                        <div class="timer-display">
+                            <span class="timer-icon">⏱️</span>
+                            <span class="game-timer" id="game-timer">1:30</span>
+                        </div>
+                        <div class="timer-progress-container">
+                            <div class="timer-progress" id="timer-progress"></div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div id="confirmation-dialog" class="overlay-screen" style="display: none;">
-            <div class="turn-message confirmation-message">
-                <h2 id="confirmation-message"></h2>
-                <div class="confirmation-buttons">
-                    <button class="btn primary-btn" onclick="confirmSwitch(true)">Yes</button>
-                    <button class="btn secondary-btn" onclick="confirmSwitch(false)">No</button>
+                <h2>Game in Progress</h2>
+
+                <div class="current-word-display">
+                    <h3>Current Word:</h3>
+                    <p id="game-current-word" class="word-display"></p>
+                    <div class="word-controls">
+                        <button class="btn secondary-btn" onclick="generateNewGameWord()">Generate New Word</button>
+                        <button class="btn secondary-btn" id="game-toggle-word-btn">Hide Word</button>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div id="error-modal" class="modal">
-            <div class="modal-content">
-                <span class="close-btn" onclick="closeErrorModal()">&times;</span>
-                <p id="error-message"></p>
+                <div class="team-logs">
+                    <div class="team-log">
+                        <h3>Team 1 Log</h3>
+                        <div class="log-input-container">
+                            <input type="text" id="team1-word-log" placeholder="Enter word for Team 1">
+                            <button class="btn mic-btn" id="mic-btn-1" data-team="1"
+                                aria-label="Use Microphone for Team 1">🎤</button>
+                        </div>
+                        <button class="btn log-btn" onclick="logWord(1)">Log Word</button>
+                        <div id="team1-word-display" class="log-display"></div>
+                    </div>
+                    <div class="team-log">
+                        <h3>Team 2 Log</h3>
+                        <div class="log-input-container">
+                            <input type="text" id="team2-word-log" placeholder="Enter word for Team 2">
+                            <button class="btn mic-btn" id="mic-btn-2" data-team="2"
+                                aria-label="Use Microphone for Team 2">🎤</button>
+                        </div>
+                        <button class="btn log-btn" onclick="logWord(2)">Log Word</button>
+                        <div id="team2-word-display" class="log-display"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="results-section card" id="results" style="display: none;">
+                <div class="results-header">
+                    <h2>Game.Execute().Complete</h2>
+                    <div class="game-summary">
+                        <div class="summary-item">
+                            <span class="summary-label">Total Words:</span>
+                            <span class="summary-value" id="total-words">0</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Correct Guesses:</span>
+                            <span class="summary-value" id="correct-count">0</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Success Rate:</span>
+                            <span class="summary-value" id="success-rate">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="results-content">
+                    <div class="team-performance">
+                        <div class="team-result" id="team1-result">
+                            <h3>Team 1</h3>
+                            <div class="team-stats">
+                                <div class="stat-item">
+                                    <span class="stat-number" id="team1-correct">0</span>
+                                    <span class="stat-label">Correct</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number" id="team1-hints">0</span>
+                                    <span class="stat-label">Hints Given</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="vs-divider">VS</div>
+
+                        <div class="team-result" id="team2-result">
+                            <h3>Team 2</h3>
+                            <div class="team-stats">
+                                <div class="stat-item">
+                                    <span class="stat-number" id="team2-correct">0</span>
+                                    <span class="stat-label">Correct</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number" id="team2-hints">0</span>
+                                    <span class="stat-label">Hints Given</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="winning-team" id="winning-team" style="display: none;">
+                        <div class="winner-announcement">
+                            <h3 id="winner-text">🏆 Team 1 Wins!</h3>
+                            <p id="winner-message">Congratulations on your victory!</p>
+                        </div>
+                    </div>
+
+                    <div class="detailed-results">
+                        <h3>Game Log</h3>
+                        <div id="detailed-log" class="game-log"></div>
+                    </div>
+
+                    <div class="results-actions">
+                        <button class="btn primary-btn" onclick="startNewGame()">Play Again</button>
+                        <button class="btn secondary-btn" onclick="backToSetup()">New Setup</button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <div class="turn-overlay" id="turn-overlay">
+            <div class="turn-message">
+                <h2 id="turn-player-name"></h2>
+                <p id="turn-team-indicator"></p>
             </div>
         </div>
     </div>
+
+    <div id="confirmation-dialog" class="overlay-screen" style="display: none;">
+        <div class="turn-message confirmation-message">
+            <h2 id="confirmation-message"></h2>
+            <div class="confirmation-buttons">
+                <button class="btn primary-btn" onclick="confirmSwitch(true)">Yes</button>
+                <button class="btn secondary-btn" onclick="confirmSwitch(false)">No</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="error-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeErrorModal()">&times;</span>
+            <p id="error-message"></p>
+        </div>
+    </div>
+    </div>
+    
+    <!-- Multiplayer scripts -->
+    <script src="multiplayerClient.js"></script>
+    <script src="multiplayerUI.js"></script>
     <script src="script.js"></script>
 </body>
+
 </html>
