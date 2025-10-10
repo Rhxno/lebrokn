@@ -2928,8 +2928,13 @@ function setupTeamManagement() {
     }
 
     if (confirmTeamsBtn) {
+        console.log('Confirm teams button found, adding listener');
         confirmTeamsBtn.addEventListener('click', () => {
-            if (validateTeamSetup()) {
+            console.log('Confirm teams button clicked');
+            const isValid = validateTeamSetup();
+            console.log('Team setup valid:', isValid);
+            if (isValid) {
+                console.log('Starting game transition');
                 confirmTeamsBtn.style.transform = 'scale(0.95)';
                 confirmTeamsBtn.style.background = 'var(--text-color-light)';
                 confirmTeamsBtn.style.color = 'var(--primary-bg)';
@@ -2940,6 +2945,8 @@ function setupTeamManagement() {
                 }, 200);
             }
         });
+    } else {
+        console.log('Confirm teams button NOT found!');
     }
 }
 
@@ -3001,10 +3008,18 @@ function createSetupPlayerElement(playerName) {
 }
 
 function validateTeamSetup() {
+    console.log('Validating team setup...');
     const team1Leader = document.getElementById('team1-leader-container').children.length > 0;
     const team2Leader = document.getElementById('team2-leader-container').children.length > 0;
     const team1Players = document.getElementById('team1-players-setup').children.length;
     const team2Players = document.getElementById('team2-players-setup').children.length;
+    const availablePlayers = document.getElementById('available-players-setup').children.length;
+
+    console.log('Team 1 leader:', team1Leader);
+    console.log('Team 2 leader:', team2Leader);
+    console.log('Team 1 players:', team1Players);
+    console.log('Team 2 players:', team2Players);
+    console.log('Available players:', availablePlayers);
 
     if (!team1Leader || !team2Leader) {
         showErrorModal('Each team needs a leader!');
@@ -3016,14 +3031,12 @@ function validateTeamSetup() {
         return false;
     }
 
-    const totalAssigned = team1Players + team2Players + 2; // +2 for leaders
-    const availablePlayers = document.getElementById('available-players-setup').children.length;
-
     if (availablePlayers > 0) {
         showErrorModal('Please assign all players to teams!');
         return false;
     }
 
+    console.log('Validation passed!');
     return true;
 }
 
