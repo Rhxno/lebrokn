@@ -499,6 +499,13 @@ input[type="range"]::-moz-range-thumb {
         max-height: 25vh !important;
         overflow-y: auto !important;
     }
+    
+    .available-players-section .player,
+    #available-players-setup .player {
+        padding: 0.4rem 0.5rem !important;
+        font-size: 0.8rem !important;
+        min-height: 32px !important;
+    }
 
     .teams-setup {
         display: grid !important;
@@ -525,13 +532,21 @@ input[type="range"]::-moz-range-thumb {
     }
     
     .leader-slot {
-        padding: 0.4rem !important;
-        margin-bottom: 0.4rem !important;
+        padding: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+        min-height: 50px !important;
+    }
+    
+    .leader-container {
+        min-height: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
     .leader-label {
         font-size: 0.7rem !important;
-        margin-bottom: 0.25rem !important;
+        margin-bottom: 0.3rem !important;
     }
 
     .player {

@@ -1357,7 +1357,7 @@ function updateTouchDropZoneHighlight(touch) {
     if (!elementBelow) return;
 
     // Find valid drop zone - include team setup specific zones
-    const dropZone = elementBelow.closest('.players-list, .leader-slot, #available-players, #available-players-setup, #team1-players-setup, #team2-players-setup, #team1-leader-container, #team2-leader-container');
+    const dropZone = elementBelow.closest('.players-list, .leader-slot, .leader-container, #available-players, #available-players-setup, #team1-players-setup, #team2-players-setup, #team1-leader-container, #team2-leader-container');
     if (dropZone && dropZone !== dragState.originalParent) {
         dropZone.classList.add('drag-over');
     }
@@ -1374,7 +1374,7 @@ function endTouchDrag(element, touch) {
 
     // Find drop target - include team setup specific zones
     const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-    const dropZone = elementBelow?.closest('.players-list, .leader-slot, #available-players, #available-players-setup, #team1-players-setup, #team2-players-setup, #team1-leader-container, #team2-leader-container');
+    const dropZone = elementBelow?.closest('.players-list, .leader-slot, .leader-container, #available-players, #available-players-setup, #team1-players-setup, #team2-players-setup, #team1-leader-container, #team2-leader-container');
 
     // Clean up
     cleanupTouchDrag(element);
@@ -1390,6 +1390,14 @@ function endTouchDrag(element, touch) {
         } else if (dropZone.id === 'team1-leader-container' || dropZone.id === 'team2-leader-container') {
             const teamNumber = dropZone.id.includes('team1') ? 1 : 2;
             handleDropToLeader(playerName, teamNumber);
+        } else if (dropZone.classList.contains('leader-container')) {
+            // Handle leader-container class
+            const leaderSlot = dropZone.closest('.leader-slot');
+            if (leaderSlot) {
+                const teamSetup = leaderSlot.closest('.team-setup');
+                const teamNumber = teamSetup?.id.includes('team1') ? 1 : 2;
+                handleDropToLeader(playerName, teamNumber);
+            }
         } else if (dropZone.id === 'team1-players-setup' || dropZone.id === 'team2-players-setup') {
             const teamNumber = dropZone.id.includes('team1') ? 1 : 2;
             handleDropToTeam(playerName, teamNumber);
