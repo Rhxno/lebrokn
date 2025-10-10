@@ -4,18 +4,18 @@
 
 /* ===== CSS VARIABLES ===== */
 :root {
-    --primary-bg: #0a0a0f;
-    --secondary-bg: #14141e;
-    --tertiary-bg: #1e1e2d;
-    --quaternary-bg: #28283c;
-    --primary-color: #00eeff;
-    --secondary-color: #00b8d4;
+    --primary-bg: #000000;
+    --secondary-bg: #0a0a0a;
+    --tertiary-bg: #141414;
+    --quaternary-bg: #1a1a1a;
+    --primary-color: #ffffff;
+    --secondary-color: #e0e0e0;
     --text-color-light: #ffffff;
-    --text-color-dark: #a0a0b0;
-    --border-color: rgba(0, 238, 255, 0.3);
-    --card-bg: rgba(20, 20, 30, 0.95);
-    --card-shadow: 0 8px 32px rgba(0, 238, 255, 0.2);
-    --transition-duration: 0.3s;
+    --text-color-dark: #808080;
+    --border-color: rgba(255, 255, 255, 0.15);
+    --card-bg: rgba(10, 10, 10, 0.98);
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    --transition-duration: 0.2s;
     --transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -30,8 +30,8 @@ html,
 body {
     width: 100%;
     height: 100%;
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    background: var(--primary-bg);
     color: var(--text-color-light);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
@@ -56,10 +56,10 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+    background: var(--primary-bg);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    transition: all 0.8s var(--transition-easing);
+    transition: all 0.3s var(--transition-easing);
     transform: translateX(100%);
     opacity: 0;
     z-index: 1000;
@@ -132,10 +132,9 @@ p {
 }
 
 .btn.primary-btn:hover {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 238, 255, 0.4);
+    background: var(--text-color-dark);
+    border-color: var(--text-color-dark);
+    transform: translateY(-1px);
 }
 
 .btn.secondary-btn {
@@ -210,25 +209,25 @@ input[type="range"]::-moz-range-thumb {
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 0.75rem;
-    padding: 0.5rem 1rem;
-    background: rgba(0, 0, 0, 0.5);
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     z-index: 10000;
 }
 
 .progress-dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
 }
 
 .progress-dot.active {
-    background: var(--primary-color);
-    box-shadow: 0 0 10px var(--primary-color);
-    transform: scale(1.3);
+    background: var(--text-color-light);
+    transform: scale(1.2);
 }
 
 /* ===== GAME MODE OPTIONS ===== */
@@ -485,23 +484,43 @@ input[type="range"]::-moz-range-thumb {
     }
 
     .teams-setup {
-        max-height: 40vh !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.5rem !important;
+        max-height: 45vh !important;
         overflow-y: auto !important;
     }
 
     .team-setup {
-        padding: 0.75rem !important;
-        margin-bottom: 0.75rem !important;
+        padding: 0.5rem !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .team-setup h3 {
+        font-size: 0.85rem !important;
+        margin-bottom: 0.4rem !important;
     }
 
     .players-list {
-        max-height: 120px !important;
+        max-height: 100px !important;
         overflow-y: auto !important;
+        padding: 0.4rem !important;
+    }
+    
+    .leader-slot {
+        padding: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
+    }
+    
+    .leader-label {
+        font-size: 0.7rem !important;
+        margin-bottom: 0.25rem !important;
     }
 
     .player {
-        padding: 0.625rem 0.75rem !important;
-        font-size: 0.9rem !important;
+        padding: 0.5rem 0.6rem !important;
+        font-size: 0.85rem !important;
+        min-height: 36px !important;
     }
 
     #game-container {
