@@ -1560,10 +1560,14 @@ async function startGame() {
     console.log('Game container found:', !!gameContainer);
     if (gameContainer) {
         gameContainer.classList.add('show');
-        gameContainer.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 1 !important;';
+        gameContainer.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 1 !important; background: red !important;';
         console.log('Game container display:', window.getComputedStyle(gameContainer).display);
         console.log('Game container visibility:', window.getComputedStyle(gameContainer).visibility);
         console.log('Game container opacity:', window.getComputedStyle(gameContainer).opacity);
+        console.log('Game container innerHTML length:', gameContainer.innerHTML.length);
+        console.log('Game container children:', gameContainer.children.length);
+        console.log('Game container offsetHeight:', gameContainer.offsetHeight);
+        console.log('Game container offsetWidth:', gameContainer.offsetWidth);
     }
 
     // Update team log headers with leader names
