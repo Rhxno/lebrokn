@@ -1553,14 +1553,14 @@ async function startGame() {
     // Hide setup screens and show game container
     console.log('Hiding setup screens and showing game container');
     document.querySelectorAll('.setup-screen').forEach(screen => {
-        screen.style.display = 'none';
+        screen.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; z-index: -1 !important;';
         screen.classList.remove('active');
     });
     const gameContainer = document.getElementById('game-container');
     console.log('Game container found:', !!gameContainer);
     if (gameContainer) {
         gameContainer.classList.add('show');
-        gameContainer.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 1 !important; background: red !important;';
+        gameContainer.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; z-index: 10000 !important; background: red !important; width: 100vw !important; min-height: 100vh !important;';
         console.log('Game container display:', window.getComputedStyle(gameContainer).display);
         console.log('Game container visibility:', window.getComputedStyle(gameContainer).visibility);
         console.log('Game container opacity:', window.getComputedStyle(gameContainer).opacity);
