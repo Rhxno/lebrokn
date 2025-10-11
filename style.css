@@ -875,3 +875,6 @@ h2, h3 { color: white !important; }
 /* Fix log entry spacing */
 .log-display { line-height: 1.8 !important; }
 .log-display > * { display: block !important; margin: 0.5rem 0 !important; }
+
+/* Center slider values */
+.slider-value-container { text-align: center !important; display: block !important; width: 100% !important; }

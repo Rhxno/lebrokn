@@ -1884,7 +1884,7 @@ function logWord(teamNumber) {
 
     const timeSpan = document.createElement('span');
     timeSpan.className = 'timestamp';
-    timeSpan.textContent = formatTime(new Date());
+    timeSpan.textContent = ` - ${formatTime(new Date())}`;
 
     logEntry.appendChild(messageSpan);
     logEntry.appendChild(timeSpan);
@@ -1933,7 +1933,10 @@ function formatTime(date) {
 
 function updateScore(teamNumber) {
     const scoreElement = document.querySelector(`#team${teamNumber} .score span`);
-    scoreElement.textContent = parseInt(scoreElement.textContent) + 1;
+    if (scoreElement) {
+        scoreElement.textContent = parseInt(scoreElement.textContent) + 1;
+    }
+    console.log(`Team ${teamNumber} scored!`);
 }
 
 async function endRound() {
