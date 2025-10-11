@@ -844,3 +844,27 @@ h2, h3 { color: white !important; }
 #game-container { position: relative !important; top: 0 !important; left: 0 !important; width: 100vw !important; min-height: 100vh !important; overflow-y: auto !important; }
 #game-container main { display: block !important; width: 100% !important; padding: 1rem !important; }
 .game-screen { display: block !important; width: 100% !important; padding: 1rem !important; background: transparent !important; }
+
+/* Hide ugly control panel */
+.game-controls-panel { display: none !important; }
+
+/* Sleek mobile game layout */
+@media (max-width: 768px) {
+    #game-container { padding: 0.5rem !important; }
+    .navbar { display: none !important; }
+    .game-header { padding: 0.75rem !important; margin-bottom: 0.75rem !important; }
+    .game-screen { padding: 0.75rem !important; }
+    .current-word-display { margin: 0.75rem 0 !important; }
+    .team-logs { margin-top: 0.75rem !important; }
+    .team-log { margin-bottom: 0.75rem !important; }
+    .team-log h3 { font-size: 0.95rem !important; margin-bottom: 0.5rem !important; }
+    .log-input-container { margin-bottom: 0.5rem !important; }
+    .btn.mic-btn { display: none !important; }
+    .word-controls { display: flex !important; flex-direction: column !important; gap: 0.5rem !important; margin-top: 0.75rem !important; }
+    .word-controls .btn { padding: 0.75rem !important; font-size: 0.9rem !important; }
+}
+
+/* Remove emoji icons and make sleek */
+.timer-icon { display: none !important; }
+.round-text::before { content: '' !important; }
+.control-button { display: none !important; }
