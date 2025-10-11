@@ -1938,29 +1938,41 @@ function updateScore(teamNumber) {
 
 async function endRound() {
     const currentLeaderName = currentTeam === 1 ? players.team1Leader : players.team2Leader;
-    const victoryMessage = `
-        ${currentLeaderName}'s Team Wins Round ${currentRound + 1}!
-    `;
-
-    showErrorModal(victoryMessage, true);
+    
+    // Update score
+    updateScore(currentTeam);
+    
     currentRound++;
 
     if (currentRound >= totalRounds) {
+        // Game over - show final results
         setTimeout(() => {
-            const finalMessage = `
-                Game Over!<br>
-                <span class="final-score">Final Score: ${currentLeaderName}'s Team Wins!</span>
-            `;
-            showErrorModal(finalMessage, true);
             endGame();
-        }, 2000);
+        }, 1500);
     } else {
-        setTimeout(() => {
-            // Continue with the same word for the next round
-            // No new word generation - teams continue guessing the same word
-            switchTeams();
+        // Continue to next round
+        setTimeout(async () => {
+            // Generate new word for next round
+            await generateNewWord();
+            
+            // Reset for next round
+            currentTeam = 1;
+            currentPlayerIndex = { 1: 0, 2: 0 };
+            
+            // Restart timer
+            if (timerEnabled) {
+                gameTimer.reset(timerDuration);
+                gameTimer.start();
+            }
+            
+            // Update round display
+            progressManager.startRound(currentRound);
+            
+            // Show turn overlay
             showTurnOverlay();
-        }, 2000);
+            highlightCurrentTeam();
+            updateActiveTeamLog();
+        }, 1500);
     }
 }
 

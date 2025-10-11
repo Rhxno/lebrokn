@@ -868,3 +868,10 @@ h2, h3 { color: white !important; }
 .timer-icon { display: none !important; }
 .round-text::before { content: '' !important; }
 .control-button { display: none !important; }
+
+/* Fix log button brightness */
+.btn.log-btn { background: rgba(255,255,255,0.15) !important; color: white !important; border: 1px solid rgba(255,255,255,0.3) !important; }
+
+/* Fix log entry spacing */
+.log-display { line-height: 1.8 !important; }
+.log-display > * { display: block !important; margin: 0.5rem 0 !important; }
