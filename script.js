@@ -2245,12 +2245,21 @@ function transitionToScreen(fromScreenId, toScreenId, direction = 'right') {
     // Update progress indicator
     updateProgressIndicator(toScreenId);
 
+    // Force hide Start Screen if it's not the target
+    if (toScreenId !== 'game-mode-select-screen') {
+        const startScreen = document.getElementById('game-mode-select-screen');
+        if (startScreen) {
+             startScreen.classList.remove('active');
+             startScreen.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; z-index: -1 !important;';
+        }
+    }
+
     // Hide current screen immediately and forcefully
     fromScreen.classList.remove('active');
     fromScreen.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; z-index: -1 !important;';
 
     // Show next screen immediately and forcefully
-    toScreen.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; transform: translateX(0) !important; z-index: 1000 !important;';
+    toScreen.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; transform: translateX(0) !important; z-index: 2000 !important;';
     toScreen.classList.add('active');
 
     // Ensure all content is visible
@@ -2260,12 +2269,19 @@ function transitionToScreen(fromScreenId, toScreenId, direction = 'right') {
     }
 
     const optionsGrid = toScreen.querySelector('.options-grid');
+    const difficultySlots = toScreen.querySelector('.difficulty-slots');
     const buttons = toScreen.querySelectorAll('.btn');
 
     if (optionsGrid) {
         optionsGrid.style.opacity = '1';
         optionsGrid.style.visibility = 'visible';
         optionsGrid.style.display = 'flex';
+    }
+
+    if (difficultySlots) {
+        difficultySlots.style.opacity = '1';
+        difficultySlots.style.visibility = 'visible';
+        difficultySlots.style.display = 'flex';
     }
 
     buttons.forEach((btn, index) => {
@@ -2740,22 +2756,7 @@ const teamsConfig = {
     }
 };
 
-function selectPlayerCount(count) {
-    numberOfPlayers = count;
-    selectedPlayerCount = count;
-    maxTeamSize = Math.floor(count / 2);
 
-    teamsConfig.team1.maxPlayers = Math.floor(count / 2);
-    teamsConfig.team2.maxPlayers = Math.floor(count / 2);
-
-    const playerSelectScreen = document.getElementById('player-select-screen');
-    const difficultySelectScreen = document.getElementById('difficulty-select-screen');
-
-    playerSelectScreen.style.display = 'none';
-
-    difficultySelectScreen.style.display = 'block';
-    difficultySelectScreen.classList.add('active');
-}
 
 // --- Add these function definitions back into script.js ---
 
