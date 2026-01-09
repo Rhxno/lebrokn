@@ -2258,7 +2258,9 @@ function transitionToScreen(fromScreenId, toScreenId, direction = 'right') {
     if (content) {
         content.style.cssText = 'opacity: 1 !important; transform: translateY(0) !important; display: flex !important; visibility: visible !important;';
     }
-}
+
+    const optionsGrid = toScreen.querySelector('.options-grid');
+    const buttons = toScreen.querySelectorAll('.btn');
 
     if (optionsGrid) {
         optionsGrid.style.opacity = '1';
