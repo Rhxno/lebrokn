@@ -2245,38 +2245,20 @@ function transitionToScreen(fromScreenId, toScreenId, direction = 'right') {
     // Update progress indicator
     updateProgressIndicator(toScreenId);
 
-    // Hide current screen immediately
+    // Hide current screen immediately and forcefully
     fromScreen.classList.remove('active');
-    fromScreen.style.display = 'none';
+    fromScreen.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; z-index: -1 !important;';
 
-    // Show next screen immediately
-    toScreen.style.display = 'flex';
-    toScreen.style.opacity = '1';
-    toScreen.style.transform = 'translateX(0)';
+    // Show next screen immediately and forcefully
+    toScreen.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; transform: translateX(0) !important; z-index: 1000 !important;';
     toScreen.classList.add('active');
 
     // Ensure all content is visible
     const content = toScreen.querySelector('.card-content');
-    const buttons = toScreen.querySelectorAll('.btn');
-    const h2 = toScreen.querySelector('h2');
-    const optionsGrid = toScreen.querySelector('.options-grid');
-
-    console.log('Content found:', !!content);
-    console.log('Buttons found:', buttons.length);
-    console.log('H2 found:', !!h2);
-    console.log('Options grid found:', !!optionsGrid);
-
     if (content) {
-        content.style.opacity = '1';
-        content.style.transform = 'translateY(0)';
-        content.style.display = 'block';
-        content.style.visibility = 'visible';
+        content.style.cssText = 'opacity: 1 !important; transform: translateY(0) !important; display: flex !important; visibility: visible !important;';
     }
-
-    if (h2) {
-        h2.style.opacity = '1';
-        h2.style.visibility = 'visible';
-    }
+}
 
     if (optionsGrid) {
         optionsGrid.style.opacity = '1';

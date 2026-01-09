@@ -1,86 +1,47 @@
-/* style.css */
+/* ============================================================================
+   PASSWORD GAME - SLEEK MONOCHROME THEME
+   ============================================================================ */
+
+/* ===== CSS VARIABLES ===== */
 :root {
-    /* Monochrome Color Scheme - Black, Grey, White Only */
     --primary-bg: #000000;
-    /* Pure black background */
-    --secondary-bg: #1a1a1a;
-    /* Dark grey for cards/sections */
-    --tertiary-bg: #2a2a2a;
-    /* Medium grey for elevated elements */
-    --quaternary-bg: #333333;
-    /* Light grey for hover states */
-
-    /* Text Colors */
-    --text-color-light: #ffffff;
-    /* Pure white text */
-    --text-color-dark: #cccccc;
-    /* Light grey text */
-    --text-color-muted: #888888;
-    /* Muted grey text */
-
-    /* Primary Colors */
+    --secondary-bg: #0a0a0a;
+    --tertiary-bg: #141414;
+    --quaternary-bg: #1a1a1a;
     --primary-color: #ffffff;
-    /* White for primary elements */
-    --secondary-color: #cccccc;
-    /* Light grey for secondary elements */
-    --accent-color: #555555;
-    /* Medium grey accent */
-
-    /* Button Colors */
-    --btn-primary: var(--primary-color);
-    /* White buttons */
-    --btn-secondary: var(--secondary-color);
-    /* Grey buttons */
-    --btn-danger: #666666;
-    /* Dark grey for danger/error */
-    --btn-success: #ffffff;
-    /* White for success */
-
-    /* Card & Layout */
-    --card-bg: var(--secondary-bg);
-    /* Dark grey cards */
-    --card-elevated: var(--tertiary-bg);
-    /* Medium grey elevated cards */
-    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
-    /* Deep black shadows */
-    --border-radius: 16px;
-    /* Modern rounded corners */
-    --border-color: #333333;
-    /* Dark grey borders */
-
-    /* Animation */
-    --transition-duration: 0.3s;
+    --secondary-color: #e0e0e0;
+    --text-color-light: #ffffff;
+    --text-color-dark: #808080;
+    --border-color: rgba(255, 255, 255, 0.15);
+    --card-bg: rgba(10, 10, 10, 0.98);
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    --transition-duration: 0.2s;
     --transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
-    /* Material design easing */
-
-    /* Team Colors */
-    --team1-color: #ffffff;
-    /* White for team 1 */
-    --team2-color: #cccccc;
-    /* Light grey for team 2 */
-
-    /* Overlays */
-    --overlay-bg: rgba(0, 0, 0, 0.95);
-    /* Deep black overlay */
-
+    
     /* Legacy compatibility variables */
     --primary: var(--primary-color);
     --secondary: var(--secondary-color);
     --dark: var(--primary-bg);
     --light: var(--text-color-light);
-    --accent: var(--accent-color);
+    --accent: var(--secondary-color);
     --card-border: var(--border-color);
+    --team1-color: #ffffff;
+    --team2-color: #cccccc;
+    --border-radius: 12px;
 }
 
 /* Global Styles - Mobile First Approach */
 html {
     box-sizing: border-box;
     font-size: 16px;
-    /* Base font size for rem calculations */
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
-    height: 100%;
-    height: -webkit-fill-available;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
+    position: fixed !important;
+    overscroll-behavior: none;
 }
 
 /* Handle safe areas on mobile devices */
@@ -102,9 +63,9 @@ html {
 body {
     margin: 0;
     padding: 0;
-    width: 100%;
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
     font-family: 'Poppins', sans-serif;
     background: var(--primary-bg);
     color: var(--text-color-light);
@@ -112,8 +73,8 @@ body {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    overflow-x: hidden;
-    position: relative;
+    overflow: hidden !important;
+    position: fixed !important;
 }
 
 /* Ensure mobile viewport is properly handled */
@@ -6262,6 +6223,44 @@ rver Not Running Message Overlay */
     /* Ensure inputs are easy to tap */
     input[type='text'], .btn {
         min-height: 48px !important; 
+    }
+}
+
+
+/* Mobile Team Setup Fixes */
+@media (max-width: 768px) {
+    #team-setup-screen .card-content {
+        justify-content: flex-start !important;
+        padding-bottom: 2rem !important;
+    }
+
+    .team-setup-container {
+        overflow-y: visible !important;
+        height: auto !important;
+        padding-bottom: 100px !important; /* Space for scrolling */
+    }
+
+    .players-setup {
+        overflow: visible !important;
+    }
+
+    .teams-setup {
+        overflow: visible !important;
+        max-height: none !important;
+        margin-top: 1rem !important;
+    }
+
+    /* Make drop zones very clear */
+    .leader-slot, .players-list {
+        min-height: 60px !important;
+        border: 2px dashed rgba(255,255,255,0.3) !important;
+        background: rgba(255,255,255,0.05) !important;
+    }
+    
+    .leader-slot.drag-over, .players-list.drag-over {
+        border-color: #ffffff !important;
+        background: rgba(255,255,255,0.15) !important;
+        transform: scale(1.02);
     }
 }
 
