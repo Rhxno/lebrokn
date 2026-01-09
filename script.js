@@ -4153,11 +4153,6 @@ function handleMultiplayerTurnChange(data) {
 window.startMultiplayerGameMode = startMultiplayerGameMode;
 window.handleMultiplayerGameUpdate = handleMultiplayerGameUpdate;
 
-
-    soundManager.play('teamSwitch');
-    hapticManager.buttonPress();
-}
-
 function handleMultiplayerRoundEnd(data) {
     if (data.type === 'game_finished') {
         // Game is completely finished
