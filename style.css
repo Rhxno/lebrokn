@@ -6264,3 +6264,42 @@ rver Not Running Message Overlay */
     }
 }
 
+/* Desktop Team Setup Optimization */
+@media (min-width: 769px) {
+    #team-setup-screen .card-content {
+        max-width: 1200px !important;
+        width: 90% !important;
+    }
+
+    #team-setup-screen .teams-setup {
+        flex-direction: row !important;
+        gap: 2rem;
+        align-items: stretch;
+    }
+
+    #team-setup-screen .team-setup {
+        flex: 1;
+        width: 48%; /* Slightly less than 50% to account for gap */
+        display: flex;
+        flex-direction: column;
+    }
+    
+    #team-setup-screen .players-list {
+        flex: 1;
+        min-height: 200px;
+        /* Custom scrollbar for desktop */
+        scrollbar-width: thin;
+        scrollbar-color: var(--text-color-dark) transparent;
+    }
+
+    /* Ensure drag and drop feels spacious on desktop */
+    #team-setup-screen .player {
+        padding: 0.8rem 1rem;
+        cursor: grab;
+    }
+
+    #team-setup-screen .player:active {
+        cursor: grabbing;
+    }
+}
+
