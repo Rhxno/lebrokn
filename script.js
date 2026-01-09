@@ -1981,7 +1981,7 @@ async function endRound() {
 
 // --- Results Calculation ---
 function endGame() {
-    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').style.display = 'flex';
     document.getElementById('results').classList.add('show');
     // Hide game controls when showing results
     const gameScreen = document.querySelector('.game-screen');
