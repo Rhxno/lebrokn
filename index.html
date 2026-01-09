@@ -192,6 +192,14 @@
             <section class="game-screen card">
                 <!-- Game Progress Header -->
                 <div class="game-header">
+                    <div class="score-board" style="display: flex; gap: 2rem; align-items: center; font-size: 1.2rem; font-weight: bold;">
+                        <div id="team1-score-container" style="color: var(--team1-color, #4facfe);">
+                            Team 1: <span id="team1-score">0</span>
+                        </div>
+                        <div id="team2-score-container" style="color: var(--team2-color, #00f2fe);">
+                            Team 2: <span id="team2-score">0</span>
+                        </div>
+                    </div>
                     <div class="game-progress-container">
                         <div class="round-indicator" id="round-indicator">
                             <span class="round-text">Round</span>

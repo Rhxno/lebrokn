@@ -21,6 +21,8 @@ class MultiplayerClient {
             onPlayerReady: null
         };
 
+        this.players = new Map(); // id -> {id, name, ...}
+
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000;
@@ -114,6 +116,14 @@ class MultiplayerClient {
         // Room events
         this.socket.on('player_joined_room', (data) => {
             this.currentRoom = data.roomInfo;
+            
+            // Update players map
+            if (data.players && Array.isArray(data.players)) {
+                data.players.forEach(p => {
+                    this.players.set(p.id, p);
+                });
+            }
+            
             if (this.callbacks.onRoomJoined) {
                 this.callbacks.onRoomJoined(data);
             }
@@ -292,6 +302,14 @@ class MultiplayerClient {
 
     getPlayerInfo() {
         return this.currentPlayer;
+    }
+
+    getPlayerName(playerId) {
+        if (this.currentPlayer && this.currentPlayer.id === playerId) {
+            return this.currentPlayer.name;
+        }
+        const player = this.players.get(playerId);
+        return player ? player.name : `Player ${playerId.substring(0, 4)}`;
     }
 
     getConnectionStatus() {

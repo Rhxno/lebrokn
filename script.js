@@ -2065,6 +2065,15 @@ function endGame() {
 
 // New game control functions
 function startNewGame() {
+    if (isMultiplayerMode) {
+        // In multiplayer, we can't just restart locally.
+        // For now, let's redirect to the lobby or show a message.
+        // Ideally, the leader would trigger a new game, but the server needs to support it.
+        // We'll instruct users to go back to the menu.
+        showErrorModal("Please return to the lobby to start a new multiplayer game.");
+        return;
+    }
+
     // Reset game state but keep teams
     gameLog = [];
     currentRound = 0;
@@ -2104,6 +2113,34 @@ function startNewGame() {
 }
 
 function backToSetup() {
+    if (isMultiplayerMode) {
+        // If in multiplayer, leave the room and go back to multiplayer menu
+        if (multiplayerClient) {
+            multiplayerClient.leaveRoom();
+        }
+        if (multiplayerUI) {
+            multiplayerUI.showMultiplayerMenu();
+        }
+        
+        // Hide game and results
+        const gameContainer = document.getElementById('game-container');
+        const resultsSection = document.getElementById('results');
+        
+        if(gameContainer) {
+             gameContainer.style.display = 'none';
+             gameContainer.classList.remove('show');
+        }
+        if(resultsSection) {
+             resultsSection.style.display = 'none';
+             resultsSection.classList.remove('show');
+        }
+        
+        isMultiplayerMode = false; // Reset mode? Or keep it true if showing MP menu? 
+        // Actually, if we show MP menu, we are still in "MP context" but not "MP Game".
+        // Let's keep isMultiplayerMode true until they click "Back to Single Player".
+        return;
+    }
+
     // Reset everything and go back to player selection
     gameLog = [];
     currentRound = 0;
@@ -3903,6 +3940,95 @@ function setupGameModeSelection() {
     }
 }
 
+// Helper functions for screen management
+function showScreen(screenId) {
+    const screen = document.getElementById(screenId);
+    if (screen) {
+        screen.classList.add('active');
+        screen.style.display = 'flex';
+        screen.style.visibility = 'visible';
+        screen.style.opacity = '1';
+    }
+}
+
+function hideScreen(screenId) {
+    const screen = document.getElementById(screenId);
+    if (screen) {
+        screen.classList.remove('active');
+        screen.style.display = 'none';
+    }
+}
+
+function showGameScreen() {
+    const gameContainer = document.getElementById('game-container');
+    if (gameContainer) {
+        gameContainer.classList.add('show');
+        gameContainer.style.display = 'block';
+        gameContainer.style.visibility = 'visible';
+        gameContainer.style.opacity = '1';
+    }
+    // Hide setup screens
+    document.querySelectorAll('.setup-screen').forEach(screen => {
+        screen.classList.remove('active');
+        screen.style.display = 'none';
+    });
+}
+
+function addToGameLog(message) {
+    const activeLogDisplay = document.querySelector(`.team-log:nth-child(${currentTeam}) .log-display`) || 
+                             document.getElementById('detailed-log');
+    
+    if (activeLogDisplay) {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.textContent = message;
+        activeLogDisplay.prepend(entry);
+    }
+}
+
+function updateScoreDisplay(scores) {
+    // Assuming score elements exist in the DOM, e.g., #team1-score, #team2-score
+    // If not, we might need to add them or update the results object
+    if (scores.team1 !== undefined) {
+         // Update visual score if elements exist
+         const s1 = document.querySelector('#team1-score');
+         if(s1) s1.textContent = scores.team1;
+    }
+    if (scores.team2 !== undefined) {
+         const s2 = document.querySelector('#team2-score');
+         if(s2) s2.textContent = scores.team2;
+    }
+}
+
+function updateCurrentTeamDisplay() {
+    showTurnOverlay();
+    highlightCurrentTeam();
+    updateActiveTeamLog();
+}
+
+function handleMultiplayerWordGenerated(data) {
+    currentWord = data.word;
+    const wordElement = document.getElementById('current-word');
+    const gameWordElement = document.getElementById('game-current-word');
+
+    if (wordElement) {
+        wordElement.textContent = currentWord;
+        wordElement.classList.remove('word-hidden');
+    }
+    if (gameWordElement) {
+        gameWordElement.textContent = currentWord;
+        gameWordElement.classList.remove('word-hidden');
+    }
+    
+    soundManager.play('wordGenerate');
+}
+
+function handleMultiplayerRoundEnd(data) {
+    soundManager.play('roundEnd');
+    // Logic to handle round end, maybe show results briefly
+}
+
+
 // Multiplayer game functions
 function startMultiplayerGameMode(gameData) {
     console.log('Starting multiplayer game with data:', gameData);
@@ -3912,9 +4038,15 @@ function startMultiplayerGameMode(gameData) {
     gameStarted = true;
 
     // Initialize teams from server data
-    if (gameData.teams) {
-        players.team1 = gameData.teams.team1.map(playerId => ({ id: playerId, name: `Player ${playerId.substring(0, 6)}` }));
-        players.team2 = gameData.teams.team2.map(playerId => ({ id: playerId, name: `Player ${playerId.substring(0, 6)}` }));
+    // Convert IDs to Names using multiplayerClient
+    if (gameData.teams && multiplayerClient) {
+        players.team1 = gameData.teams.team1.map(id => multiplayerClient.getPlayerName(id));
+        players.team2 = gameData.teams.team2.map(id => multiplayerClient.getPlayerName(id));
+        
+        // Assign leaders (arbitrarily the first player for now, or if server sent leader info)
+        // If server data had leader info we should use it. For now, first player.
+        players.team1Leader = players.team1[0];
+        players.team2Leader = players.team2[0];
     }
 
     // Set up game state from server
@@ -3929,10 +4061,27 @@ function startMultiplayerGameMode(gameData) {
             timerDuration = gameData.gameState.timer.duration;
             gameTimer.reset(timerDuration);
         }
+        
+        if (gameData.gameState.currentWord) {
+             currentWord = gameData.gameState.currentWord;
+        }
     }
 
     // Show game screen
     showGameScreen();
+
+    // Update displays
+    updateTeamPlayersDisplay();
+    updateTeamLogHeaders();
+    updateCurrentTeamDisplay();
+    
+    // Show current word if available
+    if (currentWord) {
+        const gameWordElement = document.getElementById('game-current-word');
+        if (gameWordElement) {
+            gameWordElement.textContent = currentWord;
+        }
+    }
 
     // Initialize progress manager
     progressManager.initialize(totalRounds);
@@ -3998,6 +4147,12 @@ function handleMultiplayerGuess(data) {
 function handleMultiplayerTurnChange(data) {
     currentTeam = data.currentTeam;
     updateCurrentTeamDisplay();
+}
+
+// Expose functions to window
+window.startMultiplayerGameMode = startMultiplayerGameMode;
+window.handleMultiplayerGameUpdate = handleMultiplayerGameUpdate;
+
 
     soundManager.play('teamSwitch');
     hapticManager.buttonPress();
